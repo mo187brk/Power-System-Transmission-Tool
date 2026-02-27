@@ -92,7 +92,7 @@ elif method == "Enter Z,Y,length":
     R = st.sidebar.number_input("R (ohm/km)", value=0.1)
     X = st.sidebar.number_input("X (ohm/km)", value=0.4)
     G = st.sidebar.number_input("G (S/km)", value=0.0)
-  B_sh = st.sidebar.number_input(
+    B_sh = st.sidebar.number_input(
     "B (S/km)",
     min_value=0.0,
     value=0.000001,
@@ -351,5 +351,6 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid()
 
 st.pyplot(fig2)
+
 
 
