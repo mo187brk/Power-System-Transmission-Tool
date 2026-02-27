@@ -16,7 +16,7 @@ if dark_mode:
 else:
     plt.style.use("default")
 
-st.title("⚡ Power Transmission Analysis (Full Version)")
+st.title("⚡ Power Transmission Analysis")
 
 # ======================================
 # Helper Function (Polar Display)
@@ -344,4 +344,5 @@ ax2.set_xlabel("Distance (km)")
 ax2.set_ylabel("Voltage (kV)")
 ax2.set_title("Voltage Along the Line")
 ax2.grid()
+
 st.pyplot(fig2)
