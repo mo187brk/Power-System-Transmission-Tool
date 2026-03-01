@@ -235,6 +235,25 @@ st.write("Stability Margin:", f"{Margin:.2f} MW")
 # ======================================
 # Power Circle with vectors
 # ======================================
+# ======================================
+# Academic Enhancements for Power Circle
+# ======================================
+
+# رسم مراكز الدوائر
+ax.scatter(Crx, Cry, color='blue', s=40)
+ax.scatter(Csx, Csy, color='red', s=40)
+
+# تسمية المراكز
+ax.text(Crx, Cry, "  Cr", color='blue')
+ax.text(Csx, Csy, "  Cs", color='red')
+
+# خط بين المراكز
+ax.plot([Crx, Csx], [Cry, Csy], 'k--', linewidth=1.5, label="Center Line")
+
+# نقطة الأصل
+ax.scatter(0, 0, color='black', s=40)
+ax.text(0, 0, "  O")
+
 alpha = np.angle(A)
 beta = np.angle(B)
 ratio = np.abs(A/B)
@@ -413,4 +432,5 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
 
