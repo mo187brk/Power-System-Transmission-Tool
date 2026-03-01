@@ -233,91 +233,77 @@ st.write("Operating Condition:", condition)
 st.write("Stability Margin:", f"{Margin:.2f} MW")
 
 # ======================================
-# Professional Power Circle (محاكاة كاملة للمحاضرة)
+# Professional Power Circle (المعالجة النهائية الشاملة)
 # ======================================
 
-# تعريف الثابت D لتجنب الـ NameError
-D = A 
+# 1. حل مشكلة الـ NameError (تعريف كل المتغيرات اللازمة)
+D_val = A  # نستخدم قيمة A لأنها تساوي D في نظامك
+B_val = B
+Vs_val = Vs
+Vr_val = Vr
+Vs_mag_val = np.abs(Vs)
+Vr_mag_val = np.abs(Vr)
 
-# الحسابات الهندسية للمراكز
+# 2. حسابات الزوايا والمراكز الهندسية
 alpha_rad = np.angle(A)
 beta_rad = np.angle(B)
-beta_deg = np.degrees(beta_rad)
-
-# حساب نصف القطر (اللازم لرسم الدوائر وتعريف window)
-Rr = (np.abs(Vs) * Vr_mag) / np.abs(B)
-Rs = Rr # في الدائرة المشتركة نصف القطر متساوي
-
-# تعريف الإحداثيات لرسم الدائرة (لحل مشكلة عدم تعريف Pr_circle و Qr_circle)
-theta_plot = np.linspace(0, 2*np.pi, 500)
 
 # مركز دائرة الاستقبال n
-n_mag = (np.abs(A) / np.abs(B)) * (Vr_mag**2)
+n_mag = (np.abs(A) / np.abs(B_val)) * (Vr_mag_val**2)
 nx, ny = -n_mag * np.cos(beta_rad - alpha_rad), n_mag * np.sin(beta_rad - alpha_rad)
 
-# مركز دائرة الإرسال n'
-ns_mag = (np.abs(D) / np.abs(B)) * (Vs_mag**2)
+# مركز دائرة الإرسال n' (تم حل مشكلة الـ D هنا)
+ns_mag = (np.abs(D_val) / np.abs(B_val)) * (Vs_mag_val**2)
 nsx, nsy = ns_mag * np.cos(beta_rad - alpha_rad), -ns_mag * np.sin(beta_rad - alpha_rad)
 
-# توليد نقاط الدوائر
-Pr_circle_pts = nx + Rr * np.cos(theta_plot)
-Qr_circle_pts = ny + Rr * np.sin(theta_plot)
-Ps_circle_pts = nsx + Rs * np.cos(theta_plot)
-Qs_circle_pts = nsy + Rs * np.sin(theta_plot)
+# 3. حساب أنصاف الأقطار ونقاط الدوائر (لحل مشكلة Pr_circle غير المعرفة)
+radius = (Vs_mag_val * Vr_mag_val) / np.abs(B_val)
+t_plot = np.linspace(0, 2*np.pi, 500)
 
-# تحديد نافذة الرؤية (window)
-window_val = max(n_mag, ns_mag, Rr) 
+Pr_pts = nx + radius * np.cos(t_plot)
+Qr_pts = ny + radius * np.sin(t_plot)
+Ps_pts = nsx + radius * np.cos(t_plot)
+Qs_pts = nsy + radius * np.sin(t_plot)
 
-fig, ax = plt.subplots(figsize=(12, 12))
+# 4. بناء الرسمة
+fig_final, ax_final = plt.subplots(figsize=(11, 11))
 
-# رسم الدوائر الأصلية المنقطة (باستخدام النقاط الجديدة)
-ax.plot(Pr_circle_pts, Qr_circle_pts, color='purple', linestyle='--', alpha=0.3, label='Receiving Circle')
-ax.plot(Ps_circle_pts, Qs_circle_pts, color='purple', linestyle='--', alpha=0.3, label='Sending Circle')
+# رسم الدوائر (نقط أرجوانية خفيفة كخلفية)
+ax_final.plot(Pr_pts, Qr_pts, 'purple', linestyle='--', alpha=0.3)
+ax_final.plot(Ps_pts, Qs_pts, 'purple', linestyle='--', alpha=0.3)
 
-# رسم المحاور الأساسية
-ax.axhline(0, color='red', linewidth=1.5)
+# المحاور الأساسية
+ax_final.axhline(0, color='red', linewidth=1.5)
 ax.axvline(0, color='red', linewidth=1.5)
 
-# رسم المتجهات (Vectors) مع رؤوس الأسهم
-ax.annotate('', xy=(0, 0), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2.5))
-ax.annotate('', xy=(Pr, Qr), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2.5))
-ax.annotate('', xy=(0, 0), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2.5))
-ax.annotate('', xy=(Ps, Qs), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2.5))
+# رسم المتجهات (n, k, n', k') بأسهم واضحة
+ax_final.annotate('', xy=(0, 0), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2.5))
+ax_final.annotate('', xy=(Pr, Qr), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2.5))
+ax_final.annotate('', xy=(0, 0), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2.5))
+ax_final.annotate('', xy=(Ps, Qs), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2.5))
 
-# إضافة نصوص التوضيح (Labels)
-ax.text(nx, ny, '  n', fontsize=16, color='blue', fontweight='bold')
-ax.text(Pr, Qr, '  k', fontsize=16, color='blue', fontweight='bold')
-ax.text(nsx, nsy, "  n'", fontsize=16, color='darkgreen', fontweight='bold')
-ax.text(Ps, Qs, "  k'", fontsize=16, color='darkgreen', fontweight='bold')
+# تسمية النقاط والقوانين (LaTeX)
+ax_final.text(nx, ny, ' n', fontsize=16, color='blue', fontweight='bold')
+ax_final.text(Pr, Qr, ' k', fontsize=16, color='blue', fontweight='bold')
+ax_final.text(nsx, nsy, " n'", fontsize=16, color='darkgreen', fontweight='bold')
+ax_final.text(Ps, Qs, " k'", fontsize=16, color='darkgreen', fontweight='bold')
 
-# كتابة القوانين على المتجهات كما في المحاضرة
-ax.text(nx/2, ny/2, r'$\frac{A}{B}V_r^2$', fontsize=14, color='blue', backgroundcolor='white')
-ax.text((nx+Pr)/2, (ny+Qr)/2, r'$\frac{V_s V_r}{B}$', fontsize=14, color='blue', backgroundcolor='white')
-
-# رسم الزوايا (Arcs)
+# إضافة الأقواس للزوايا (delta & beta-alpha)
 from matplotlib.patches import Arc
-# زاوية beta - alpha
-arc1 = Arc((0, 0), n_mag*0.4, n_mag*0.4, theta1=180-np.degrees(beta_rad-alpha_rad), theta2=180, color='red', lw=2)
-ax.add_patch(arc1)
-ax.text(nx*0.25, ny*0.15, r'$\beta-\alpha$', color='red', fontsize=13, fontweight='bold')
-
 # زاوية delta
-delta_val = np.degrees(np.angle(Vs) - np.angle(Vr))
-arc2 = Arc((nx, ny), n_mag*0.5, n_mag*0.5, theta1=-np.degrees(beta_rad-alpha_rad), 
-           theta2=-np.degrees(beta_rad-alpha_rad)+delta_val, color='magenta', lw=2)
-ax.add_patch(arc2)
-ax.text(nx + (Pr-nx)*0.2, ny + (Qr-ny)*0.2, r'$\delta$', color='magenta', fontsize=15, fontweight='bold')
+d_deg = np.degrees(np.angle(Vs_val) - np.angle(Vr_val))
+arc_d = Arc((nx, ny), n_mag*0.4, n_mag*0.4, theta1=-np.degrees(beta_rad-alpha_rad), 
+            theta2=-np.degrees(beta_rad-alpha_rad)+d_deg, color='magenta', lw=2)
+ax_final.add_patch(arc_d)
 
-# تنسيق النهائي للرسمة
-ax.set_xlim(-window_val*1.8, window_val*1.8)
-ax.set_ylim(-window_val*1.8, window_val*1.8)
-ax.set_aspect('equal')
-ax.grid(True, linestyle=':', alpha=0.4)
-ax.set_title("Combined Sending and Receiving-end Power Circle Diagram", fontsize=18, pad=20)
-ax.set_xlabel("P (MW)", fontsize=12)
-ax.set_ylabel("Q (MVAR)", fontsize=12)
+# ضبط حدود الرسم آلياً بناءً على الحسابات
+win = max(n_mag, ns_mag, radius) * 1.6
+ax_final.set_xlim(-win, win)
+ax_final.set_ylim(-win, win)
+ax_final.set_aspect('equal')
+ax_final.set_title("Combined Sending and Receiving-end Power Circle Diagram", fontsize=16)
 
-st.pyplot(fig)
+st.pyplot(fig_final)
 # ======================================
 # Voltage Along Line
 # ======================================
@@ -333,6 +319,7 @@ ax2.set_ylabel("Voltage (kV)")
 ax2.set_title("Voltage Along the Line")
 ax2.grid()
 st.pyplot(fig2)
+
 
 
 
