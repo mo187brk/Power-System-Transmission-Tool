@@ -233,128 +233,83 @@ st.write("Operating Condition:", condition)
 st.write("Stability Margin:", f"{Margin:.2f} MW")
 
 # ======================================
-# Power Circle with vectors
+# الرسمة الاحترافية (مطابقة للمحاضرة)
 # ======================================
-alpha = np.angle(A)
-beta = np.angle(B)
-ratio = np.abs(A/B)
 
-Rr = ratio*(Vr_mag**2)
-theta_r = beta - alpha
-Crx = Rr*np.cos(theta_r)
-Cry = Rr*np.sin(theta_r)
+# حل مشكلة الـ NameError: بنعرف D بتساوي A لأن الخط متماثل
+D = A 
 
-Vs_mag = np.abs(Vs)
-Rs = ratio*(Vs_mag**2)
-Csx = Rs*np.cos(beta)
-Csy = Rs*np.sin(beta)
+# 1. الحسابات الهندسية للمراكز (Centers)
+# زوايا ثوابت الخط
+alpha_rad = np.angle(A)
+beta_rad = np.angle(B)
+beta_deg = np.degrees(beta_rad)
+alpha_deg = np.degrees(alpha_rad)
 
-theta_plot = np.linspace(0, 2*np.pi, 400)
-Pr_circle = Crx + Rr*np.cos(theta_plot)
-Qr_circle = Cry + Rr*np.sin(theta_plot)
-Ps_circle = Csx + Rs*np.cos(theta_plot)
-Qs_circle = Csy + Rs*np.sin(theta_plot)
+# مركز دائرة الاستقبال (نقطة n) -> الإحداثيات: -(A/B)*Vr^2
+n_mag = (np.abs(A) / np.abs(B)) * (Vr_mag**2)
+nx, ny = -n_mag * np.cos(beta_rad - alpha_rad), n_mag * np.sin(beta_rad - alpha_rad)
 
-focus = max(abs(Pr), abs(Ps), abs(Qr), abs(Qs))
-window = max(focus*3, 0.3*max(Rr, Rs))
+# مركز دائرة الإرسال (نقطة n') -> الإحداثيات: (D/B)*Vs^2
+ns_mag = (np.abs(D) / np.abs(B)) * (Vs_mag**2)
+nsx, nsy = ns_mag * np.cos(beta_rad - alpha_rad), -ns_mag * np.sin(beta_rad - alpha_rad)
 
-if run_anim:
-    st.subheader("Operating Point Movement (Stability Animation)")
+fig, ax = plt.subplots(figsize=(12, 12))
 
-    # قيم الحمل للتشغيل التدريجي
-    load_values = np.linspace(0, Pmax_calc*1.2, 40)
+# 2. رسم الدوائر (نفس الحسابات الأصلية عندك بس بشكل منقط)
+ax.plot(Pr_circle, Qr_circle, color='purple', linestyle='--', alpha=0.3)
+ax.plot(Ps_circle, Qs_circle, color='purple', linestyle='--', alpha=0.3)
 
-    fig_anim, ax_anim = plt.subplots(figsize=(8,8))
+# 3. رسم المحاور (Active & Reactive Power) باللون الأحمر
+ax.axhline(0, color='red', linewidth=1.2)
+ax.axvline(0, color='red', linewidth=1.2)
+ax.text(window*0.9, 5, 'Active power', color='black', fontsize=12, fontweight='bold')
+ax.text(5, window*0.9, 'Reactive power', color='black', fontsize=12, fontweight='bold', rotation=90)
 
-    # رسم الدوائر
-    ax_anim.plot(Pr_circle, Qr_circle, 'b', linewidth=2, label='Receiving')
-    ax_anim.plot(Ps_circle, Qs_circle, 'r', linewidth=2, label='Sending')
+# 4. المتجهات الرئيسية (Vectors)
+# المتجه من الأصل لـ n والمتجه من n لـ k
+ax.annotate('', xy=(0, 0), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2))
+ax.annotate('', xy=(Pr, Qr), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2))
 
-    # النقاط على المسار + تلوين حسب الاستقرار
-    for P_test in load_values:
-        Q_test = P_test * np.tan(phi) if PF != 0 else 0
-        color = 'green' if P_test <= Pmax_calc else 'red'
-        ax_anim.scatter(P_test, Q_test, color=color, s=25, zorder=5)
+# المتجه من الأصل لـ n' والمتجه من n' لـ k'
+ax.annotate('', xy=(0, 0), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2))
+ax.annotate('', xy=(Ps, Qs), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2))
 
-    # Pmax كنقطة مميزة
-    ax_anim.scatter(Pmax_calc, 0, color='purple', s=80, zorder=6)
-    ax_anim.text(Pmax_calc, 0, f'  Pmax\n{Pmax_calc:.0f} MW', color='purple', fontsize=12)
+# 5. تسمية النقاط (Labels) كما في المحاضرة
+ax.text(nx, ny, ' n', fontsize=16, color='blue', fontweight='bold', va='bottom')
+ax.text(Pr, Qr, ' k', fontsize=16, color='blue', fontweight='bold', va='top')
+ax.text(nsx, nsy, " n'", fontsize=16, color='darkgreen', fontweight='bold', va='top')
+ax.text(Ps, Qs, " k'", fontsize=16, color='darkgreen', fontweight='bold', va='bottom')
 
-    # Power vectors (نقطة التشغيل الحالية)
-    scale = 0.04 * max(Rr, Rs)
-    ax_anim.arrow(0, 0, Pr, Qr, head_width=scale, length_includes_head=True, color='blue')
-    ax_anim.arrow(0, 0, Ps, Qs, head_width=scale, length_includes_head=True, color='red')
+# تسمية المتجهات (القيم)
+ax.text(nx/2, ny/2, r'$\frac{A}{B}V_r^2$', fontsize=14, color='blue', ha='right')
+ax.text((nx+Pr)/2, (ny+Qr)/2, r'$\frac{V_s V_r}{B}$', fontsize=14, color='blue')
 
-    # خطوط الإسقاط projection lines
-    ax_anim.plot([Pr, Pr], [0, Qr], 'b--')
-    ax_anim.plot([0, Pr], [Qr, Qr], 'b--')
-    ax_anim.plot([Ps, Ps], [0, Qs], 'r--')
-    ax_anim.plot([0, Ps], [Qs, Qs], 'r--')
+# 6. رسم الزوايا (Arcs)
+# زاوية beta - alpha
+from matplotlib.patches import Arc
+angle_ba = Arc((0, 0), n_mag*0.4, n_mag*0.4, theta1=180-np.degrees(beta_rad-alpha_rad), theta2=180, color='red', lw=1.5)
+ax.add_patch(angle_ba)
+ax.text(nx*0.2, ny*0.1, r'$\beta-\alpha$', color='red', fontsize=13)
 
-    # خط الربط Power Transfer Line
-    ax_anim.plot([Pr, Ps], [Qr, Qs], 'g', linewidth=2, label="Power Transfer Line")
+# زاوية delta (بين k و الخط العمودي لـ n)
+delta_val = np.degrees(np.angle(Vs) - np.angle(Vr))
+angle_delta = Arc((nx, ny), n_mag*0.5, n_mag*0.5, theta1=-np.degrees(beta_rad-alpha_rad), 
+                  theta2=-np.degrees(beta_rad-alpha_rad)+delta_val, color='magenta', lw=2)
+ax.add_patch(angle_delta)
+ax.text(nx + (Pr-nx)*0.3, ny + (Qr-ny)*0.3, r'$\delta$', color='magenta', fontsize=15, fontweight='bold')
 
-    # Smart zoom
-    focus_P = max(abs(Pr), abs(Ps), Pmax_calc)
-    focus_Q = max(abs(Qr), abs(Qs))
-    window = max(focus_P, focus_Q) * 1.5
-    ax_anim.set_xlim(-window, window)
-    ax_anim.set_ylim(-window, window)
+# 7. خط الربط (Power Transfer Line)
+ax.plot([Pr, Ps], [Qr, Qs], 'g', linewidth=2, label="Transfer Line")
 
-    # Formatting
-    ax_anim.set_aspect('equal')
-    ax_anim.grid(True, linestyle='--', alpha=0.3)
-    ax_anim.set_title("Stability Path Animation", fontsize=14)
-    ax_anim.set_xlabel("Active Power P (MW)")
-    ax_anim.set_ylabel("Reactive Power Q (MVAR)")
-    ax_anim.legend()
-
-    st.pyplot(fig_anim)
-# ======================================
-# Professional Plot with arrows
-# ======================================
-fig, ax = plt.subplots(figsize=(8,8))
-ax.plot(Pr_circle, Qr_circle, 'b', label="Receiving")
-ax.plot(Ps_circle, Qs_circle, 'r', label="Sending")
-ax.axhline(Qmax, linestyle='--', color='orange', label="Qmax")
-ax.axhline(Qmin, linestyle='--', color='orange', label="Qmin")
-
-# Operating points
-ax.scatter(Pr, Qr, color='blue', s=80, label="Pr,Qr")
-ax.scatter(Ps, Qs, color='red', s=80, label="Ps,Qs")
-
-# Vectors (arrows)
-scale = 0.04 * max(Rr, Rs)
-ax.arrow(0, 0, Pr, Qr, head_width=scale, color='blue', length_includes_head=True)
-ax.arrow(0, 0, Ps, Qs, head_width=scale, color='red', length_includes_head=True)
-
-# Projection lines
-ax.plot([Pr, Pr], [0, Qr], 'b--')
-ax.plot([0, Pr], [Qr, Qr], 'b--')
-ax.plot([Ps, Ps], [0, Qs], 'r--')
-ax.plot([0, Ps], [Qs, Qs], 'r--')
-
-# Transfer line
-ax.plot([Pr, Ps], [Qr, Qs], 'g', label="Power Transfer")
-
-# Stability limit
-ax.scatter(Pmax_calc, 0, color='purple', s=80)
-ax.text(Pmax_calc, 0, "Pmax")
-
-# Stability angle
-delta = np.degrees(np.angle(Vs) - np.angle(Vr))
-ax.text(Pr*0.6, Qr*0.6, f"δ={delta:.1f}°")
-
-ax.set_xlim(-window, window)
-ax.set_ylim(-window, window)
-ax.grid()
-ax.legend()
+# 8. ضبط الحدود والشكل النهائي
+ax.set_xlim(-window*1.5, window*1.5)
+ax.set_ylim(-window*1.5, window*1.5)
 ax.set_aspect('equal')
-ax.set_xlabel("P (MW)")
-ax.set_ylabel("Q (MVAR)")
-ax.set_title("Combined Power Circle with Vectors")
-st.pyplot(fig)
+ax.grid(True, linestyle=':', alpha=0.3)
+ax.set_title("Combined Sending and Receiving-end Power Circle Diagram", fontsize=16, pad=20)
 
+st.pyplot(fig)
 # ======================================
 # Voltage Along Line
 # ======================================
@@ -370,3 +325,4 @@ ax2.set_ylabel("Voltage (kV)")
 ax2.set_title("Voltage Along the Line")
 ax2.grid()
 st.pyplot(fig2)
+
