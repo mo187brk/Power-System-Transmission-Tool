@@ -259,25 +259,43 @@ Qs_circle = Csy + Rs*np.sin(theta_plot)
 focus = max(abs(Pr), abs(Ps), abs(Qr), abs(Qs))
 window = max(focus*3, 0.3*max(Rr, Rs))
 
+# ======================================
+# Stability Animation (Fixed + Lecture Style)
+# ======================================
 if run_anim:
     st.subheader("Operating Point Movement (Stability Animation)")
 
-    load_values = np.linspace(0, Pmax_calc*1.2, 40)
+    load_values = np.linspace(0, Pmax_calc*1.2, 60)
 
     fig_anim, ax_anim = plt.subplots(figsize=(10,10))
 
-    # Circles
-    ax_anim.plot(Pr_circle, Qr_circle, 'b', linewidth=2, label='Receiving')
-    ax_anim.plot(Ps_circle, Qs_circle, 'r', linewidth=2, label='Sending')
+    # Power circles
+    ax_anim.plot(Pr_circle, Qr_circle, 'b', linewidth=2.5, label='Receiving Circle')
+    ax_anim.plot(Ps_circle, Qs_circle, 'r', linewidth=2.5, label='Sending Circle')
 
-    # Stability path
+    # ======================================
+    # Stability Path (Dashed like lecture)
+    # ======================================
+    P_path = []
+    Q_path = []
+
     for P_test in load_values:
         Q_test = P_test * np.tan(phi) if PF != 0 else 0
-        color = 'green' if P_test <= Pmax_calc else 'red'
-        ax_anim.scatter(P_test, Q_test, color=color, s=25, zorder=5)
+        P_path.append(P_test)
+        Q_path.append(Q_test)
 
-    # Pmax
-    ax_anim.scatter(Pmax_calc, 0, color='purple', s=100, zorder=6)
+    ax_anim.plot(P_path, Q_path,
+                 linestyle='--',
+                 linewidth=2,
+                 color='green',
+                 label='Stability Path')
+
+    # Mark operating point
+    ax_anim.scatter(Pr, Qr, color='blue', s=120, zorder=6)
+    ax_anim.scatter(Ps, Qs, color='red', s=120, zorder=6)
+
+    # Pmax point
+    ax_anim.scatter(Pmax_calc, 0, color='purple', s=120, zorder=7)
     ax_anim.text(Pmax_calc, 0,
                  f'  Pmax\n{Pmax_calc:.0f} MW',
                  color='purple', fontsize=12)
@@ -293,49 +311,39 @@ if run_anim:
                   length_includes_head=True,
                   color='red')
 
-    # Labels
-    ax_anim.text(Pr, Qr, "  Sr", fontsize=12, color='blue')
-    ax_anim.text(Ps, Qs, "  Ss", fontsize=12, color='red')
-
-    # Projection lines
-    ax_anim.plot([Pr, Pr], [0, Qr], 'b--')
-    ax_anim.plot([0, Pr], [Qr, Qr], 'b--')
-    ax_anim.plot([Ps, Ps], [0, Qs], 'r--')
-    ax_anim.plot([0, Ps], [Qs, Qs], 'r--')
-
     # Transfer line
     ax_anim.plot([Pr, Ps], [Qr, Qs],
-                 'g', linewidth=2,
+                 'k', linewidth=2,
                  label="Power Transfer Line")
 
-    # Smart zoom
-    focus_P = max(abs(Pr), abs(Ps), Pmax_calc)
-    focus_Q = max(abs(Qr), abs(Qs))
-    
-max_P_anim = max(
-    abs(Pr_circle).max(),
-    abs(Ps_circle).max(),
-    abs(Pmax_calc)
-)
+    # ======================================
+    # Smart Zoom (Fixed indentation error)
+    # ======================================
+    max_P_anim = max(
+        np.max(np.abs(Pr_circle)),
+        np.max(np.abs(Ps_circle)),
+        abs(Pmax_calc),
+        abs(Pr),
+        abs(Ps)
+    )
 
-max_Q_anim = max(
-    abs(Qr_circle).max(),
-    abs(Qs_circle).max()
-)
+    max_Q_anim = max(
+        np.max(np.abs(Qr_circle)),
+        np.max(np.abs(Qs_circle)),
+        abs(Qr),
+        abs(Qs)
+    )
 
-window_anim = max(max_P_anim, max_Q_anim) * 1.2
-
-ax_anim.set_xlim(-window_anim, window_anim)
-ax_anim.set_ylim(-window_anim, window_anim)
+    window_anim = max(max_P_anim, max_Q_anim) * 1.2
 
     ax_anim.set_xlim(-window_anim, window_anim)
     ax_anim.set_ylim(-window_anim, window_anim)
 
     ax_anim.set_aspect('equal')
     ax_anim.grid(True, linestyle='--', alpha=0.4)
-    ax_anim.set_title("Stability Path Animation", fontsize=16)
-    ax_anim.set_xlabel("Active Power P (MW)", fontsize=12)
-    ax_anim.set_ylabel("Reactive Power Q (MVAR)", fontsize=12)
+    ax_anim.set_xlabel("Active Power P (MW)")
+    ax_anim.set_ylabel("Reactive Power Q (MVAR)")
+    ax_anim.set_title("Stability Path (Lecture Style)")
     ax_anim.legend()
 
     st.pyplot(fig_anim)
@@ -419,6 +427,22 @@ ax.text(Pr*0.6, Qr*0.6,
         f"δ = {delta:.1f}°",
         fontsize=13,
         bbox=dict(facecolor='white', alpha=0.7))
+# ======================================
+# Arc for stability angle δ (Lecture style)
+# ======================================
+delta_rad = np.angle(Vs) - np.angle(Vr)
+
+arc_radius = 0.25 * max(abs(Pr), abs(Qr), abs(Ps), abs(Qs))
+theta_arc = np.linspace(0, delta_rad, 50)
+
+arc_x = arc_radius * np.cos(theta_arc)
+arc_y = arc_radius * np.sin(theta_arc)
+
+ax.plot(arc_x, arc_y, color='black', linewidth=2)
+ax.text(arc_radius*1.1*np.cos(delta_rad/2),
+        arc_radius*1.1*np.sin(delta_rad/2),
+        "δ",
+        fontsize=14)
 
 # ======================================
 # Smart Academic Scaling (Stable View)
@@ -471,6 +495,7 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
 
 
 
