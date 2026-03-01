@@ -398,13 +398,25 @@ st.pyplot(fig)
 
 
 # ======================================
-# Voltage Along Line
+# Long Line Voltage Profile (Accurate)
 # ======================================
-st.subheader("Voltage Profile")
 
-line_length = st.sidebar.number_input("Line Length for Profile (km)", value=100.0)
-distance = np.linspace(0, line_length, 100)
-V_profile = np.abs(Vr) + (np.abs(Vs)-np.abs(Vr))*(distance/line_length)
+# Parameters per km
+Z_per_km = R + 1j*X
+Y_per_km = 1j*B_sh
+
+gamma = np.sqrt(Z_per_km * Y_per_km)
+Zc = np.sqrt(Z_per_km / Y_per_km)
+
+distance = np.linspace(0, line_length, 200)
+
+V_profile = []
+
+for x in distance:
+    Vx = Vr*np.cosh(gamma*x) + Ir*Zc*np.sinh(gamma*x)
+    V_profile.append(np.abs(Vx))
+
+V_profile = np.array(V_profile)
 
 fig2, ax2 = plt.subplots(figsize=(10,4))
 ax2.plot(distance, V_profile, linewidth=2)
@@ -412,8 +424,10 @@ ax2.set_xlabel("Distance (km)")
 ax2.set_ylabel("Voltage (kV)")
 ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
+ax2.invert_xaxis()
 
 st.pyplot(fig2)
+
 
 
 
