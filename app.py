@@ -398,22 +398,37 @@ st.pyplot(fig)
 
 
 # ======================================
-# Voltage Along Line
+# Voltage Along Line (Hyperbolic Model)
 # ======================================
-st.subheader("Voltage Profile")
+st.subheader("Scientific Voltage Profile")
 
-line_length = st.sidebar.number_input("Line Length for Profile (km)", value=100.0)
-distance = np.linspace(0, line_length, 100)
-V_profile = np.abs(Vr) + (np.abs(Vs)-np.abs(Vr))*(distance/line_length)
+line_length_total = length # استخدم الطول الكلي المدخل سابقاً
+distance = np.linspace(0, line_length_total, 100)
 
-fig2, ax2 = plt.subplots(figsize=(10,4))
-ax2.plot(distance, V_profile, linewidth=2)
-ax2.set_xlabel("Distance (km)")
+# حساب ثابت الانتشار (Propagation Constant) والمعاوقة الموجية (Characteristic Impedance)
+gamma = np.sqrt(Z * Y) / length if length != 0 else 0
+Zc = np.sqrt(Z / Y) if Y != 0 else 0
+
+V_profile = []
+
+for x in distance:
+    # معادلة الجهد الدقيقة عند أي نقطة x من جهة الاستقبال
+    # V(x) = Vr*cosh(gamma*x) + Ir*Zc*sinh(gamma*x)
+    Vx = Vr * np.cosh(gamma * x) + (Ir * 1000) * Zc * np.sinh(gamma * x) # ضربنا Ir في 1000 للتحويل من kA لـ A
+    V_profile.append(np.abs(Vx) / 1000) # العودة للـ kV للرسم
+
+fig2, ax2 = plt.subplots(figsize=(10, 5))
+ax2.plot(distance, V_profile, linewidth=2, color='#00FF00', label='Actual Voltage (Hyperbolic)')
+ax2.axhline(Vr_mag, color='red', linestyle='--', alpha=0.5, label='Nominal Vr')
+
+ax2.set_xlabel("Distance from Receiving End (km)")
 ax2.set_ylabel("Voltage (kV)")
-ax2.set_title("Voltage Along the Line")
+ax2.set_title("Voltage Distribution Along the Line")
+ax2.legend()
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
 
 
 
