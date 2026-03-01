@@ -333,6 +333,30 @@ fig, ax = plt.subplots(figsize=(10,10))
 
 ax.plot(Pr_circle, Qr_circle, 'b', linewidth=2, label="Receiving")
 ax.plot(Ps_circle, Qs_circle, 'r', linewidth=2, label="Sending")
+
+# ======================================
+# Academic additions (as in lecture)
+# ======================================
+
+# Centers of circles
+ax.scatter(Crx, Cry, color='blue', s=60, zorder=6)
+ax.scatter(Csx, Csy, color='red', s=60, zorder=6)
+
+# Center labels
+ax.text(Crx, Cry, "  Cr", fontsize=11, color='blue')
+ax.text(Csx, Csy, "  Cs", fontsize=11, color='red')
+
+# Line between centers (important in lecture diagram)
+ax.plot([Crx, Csx], [Cry, Csy],
+        linestyle='--',
+        color='black',
+        linewidth=1.5,
+        label="Line of Centers")
+
+# Origin point (Po)
+ax.scatter(0, 0, color='black', s=70, zorder=7)
+ax.text(0, 0, "  O", fontsize=11)
+
 ax.axhline(Qmax, linestyle='--', color='orange', label="Qmax")
 ax.axhline(Qmin, linestyle='--', color='orange', label="Qmin")
 
@@ -414,6 +438,7 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
 
 
 
