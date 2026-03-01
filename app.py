@@ -244,6 +244,13 @@ alpha_rad = np.angle(A)
 beta_rad = np.angle(B)
 beta_deg = np.degrees(beta_rad)
 
+# حساب نصف القطر (اللازم لرسم الدوائر وتعريف window)
+Rr = (np.abs(Vs) * Vr_mag) / np.abs(B)
+Rs = Rr # في الدائرة المشتركة نصف القطر متساوي
+
+# تعريف الإحداثيات لرسم الدائرة (لحل مشكلة عدم تعريف Pr_circle و Qr_circle)
+theta_plot = np.linspace(0, 2*np.pi, 500)
+
 # مركز دائرة الاستقبال n
 n_mag = (np.abs(A) / np.abs(B)) * (Vr_mag**2)
 nx, ny = -n_mag * np.cos(beta_rad - alpha_rad), n_mag * np.sin(beta_rad - alpha_rad)
@@ -252,11 +259,20 @@ nx, ny = -n_mag * np.cos(beta_rad - alpha_rad), n_mag * np.sin(beta_rad - alpha_
 ns_mag = (np.abs(D) / np.abs(B)) * (Vs_mag**2)
 nsx, nsy = ns_mag * np.cos(beta_rad - alpha_rad), -ns_mag * np.sin(beta_rad - alpha_rad)
 
+# توليد نقاط الدوائر
+Pr_circle_pts = nx + Rr * np.cos(theta_plot)
+Qr_circle_pts = ny + Rr * np.sin(theta_plot)
+Ps_circle_pts = nsx + Rs * np.cos(theta_plot)
+Qs_circle_pts = nsy + Rs * np.sin(theta_plot)
+
+# تحديد نافذة الرؤية (window)
+window_val = max(n_mag, ns_mag, Rr) 
+
 fig, ax = plt.subplots(figsize=(12, 12))
 
-# رسم الدوائر الأصلية المنقطة
-ax.plot(Pr_circle, Qr_circle, color='purple', linestyle='--', alpha=0.3, label='Receiving Circle')
-ax.plot(Ps_circle, Qs_circle, color='purple', linestyle='--', alpha=0.3, label='Sending Circle')
+# رسم الدوائر الأصلية المنقطة (باستخدام النقاط الجديدة)
+ax.plot(Pr_circle_pts, Qr_circle_pts, color='purple', linestyle='--', alpha=0.3, label='Receiving Circle')
+ax.plot(Ps_circle_pts, Qs_circle_pts, color='purple', linestyle='--', alpha=0.3, label='Sending Circle')
 
 # رسم المحاور الأساسية
 ax.axhline(0, color='red', linewidth=1.5)
@@ -293,8 +309,8 @@ ax.add_patch(arc2)
 ax.text(nx + (Pr-nx)*0.2, ny + (Qr-ny)*0.2, r'$\delta$', color='magenta', fontsize=15, fontweight='bold')
 
 # تنسيق النهائي للرسمة
-ax.set_xlim(-window*1.8, window*1.8)
-ax.set_ylim(-window*1.8, window*1.8)
+ax.set_xlim(-window_val*1.8, window_val*1.8)
+ax.set_ylim(-window_val*1.8, window_val*1.8)
 ax.set_aspect('equal')
 ax.grid(True, linestyle=':', alpha=0.4)
 ax.set_title("Combined Sending and Receiving-end Power Circle Diagram", fontsize=18, pad=20)
@@ -302,7 +318,6 @@ ax.set_xlabel("P (MW)", fontsize=12)
 ax.set_ylabel("Q (MVAR)", fontsize=12)
 
 st.pyplot(fig)
-
 # ======================================
 # Voltage Along Line
 # ======================================
@@ -318,5 +333,6 @@ ax2.set_ylabel("Voltage (kV)")
 ax2.set_title("Voltage Along the Line")
 ax2.grid()
 st.pyplot(fig2)
+
 
 
