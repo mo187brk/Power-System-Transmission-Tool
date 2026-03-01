@@ -156,21 +156,6 @@ st.write("Vs =", polar_str(Vs, "kV"))
 st.write("Is =", polar_str(Is, "kA"))
 
 # ======================================
-# Voltage Profile Along Line
-# ======================================
-st.subheader("Voltage Profile Along Line")
-points = np.linspace(0, 1, 20)
-V_profile = np.abs(Vr) + points*(np.abs(Vs)-np.abs(Vr))
-
-fig_v, ax_v = plt.subplots(figsize=(7,4))
-ax_v.plot(points*100, V_profile)
-ax_v.set_xlabel("Line Length (%)")
-ax_v.set_ylabel("Voltage (kV)")
-ax_v.set_title("Voltage Profile")
-ax_v.grid()
-st.pyplot(fig_v)
-
-# ======================================
 # 4) Performance Analysis
 # ======================================
 Ss = 3*Vs*np.conj(Is)
@@ -428,3 +413,4 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
