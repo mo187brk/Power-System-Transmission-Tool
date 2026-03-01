@@ -398,13 +398,29 @@ st.pyplot(fig)
 
 
 # ======================================
-# Long Line Voltage Profile (Accurate)
+# Accurate Voltage Profile (Works for all modes)
 # ======================================
 
-# Parameters per km
-Z_per_km = R + 1j*X
-Y_per_km = 1j*B_sh
+st.subheader("Voltage Profile (Long Line Model)")
 
+line_length = st.sidebar.number_input("Line Length for Profile (km)", value=100.0)
+
+# --------------------------------------
+# Ensure Z and Y are defined for all methods
+# --------------------------------------
+try:
+    Z_total = Z
+    Y_total = Y
+except:
+    # If ABCD entered directly, approximate from B and C
+    Z_total = B
+    Y_total = C
+
+# Per km values
+Z_per_km = Z_total / line_length
+Y_per_km = Y_total / line_length
+
+# Propagation parameters
 gamma = np.sqrt(Z_per_km * Y_per_km)
 Zc = np.sqrt(Z_per_km / Y_per_km)
 
@@ -418,17 +434,17 @@ for x in distance:
 
 V_profile = np.array(V_profile)
 
+# --------------------------------------
+# Plot
+# --------------------------------------
 fig2, ax2 = plt.subplots(figsize=(10,4))
 ax2.plot(distance, V_profile, linewidth=2)
-ax2.set_xlabel("Distance (km)")
+ax2.set_xlabel("Distance from Receiving End (km)")
 ax2.set_ylabel("Voltage (kV)")
-ax2.set_title("Voltage Along the Line")
+ax2.set_title("Voltage Profile (Long Line Model)")
 ax2.grid(True, linestyle='--', alpha=0.4)
+
+# Receiving end at left (lecture style)
 ax2.invert_xaxis()
 
 st.pyplot(fig2)
-
-
-
-
-
