@@ -348,132 +348,127 @@ if run_anim:
 
     st.pyplot(fig_anim)
 
-
 # ======================================
-# Professional Plot with arrows
+# Professional Academic Power Circle (Lecture Level)
 # ======================================
-fig, ax = plt.subplots(figsize=(10,10))
+fig, ax = plt.subplots(figsize=(8,8))
 
-ax.plot(Pr_circle, Qr_circle, 'b', linewidth=2, label="Receiving")
-ax.plot(Ps_circle, Qs_circle, 'r', linewidth=2, label="Sending")
+# Circles (thinner for clarity)
+ax.plot(Pr_circle, Qr_circle, 'b', linewidth=1.8, label="Receiving Circle")
+ax.plot(Ps_circle, Qs_circle, 'r', linewidth=1.8, label="Sending Circle")
 
-# ======================================
-# Academic additions (as in lecture)
-# ======================================
+# Centers
+ax.scatter(Crx, Cry, color='blue', s=40, zorder=6)
+ax.scatter(Csx, Csy, color='red', s=40, zorder=6)
+ax.text(Crx, Cry, " Cr", fontsize=12, color='blue')
+ax.text(Csx, Csy, " Cs", fontsize=12, color='red')
 
-# Centers of circles
-ax.scatter(Crx, Cry, color='blue', s=60, zorder=6)
-ax.scatter(Csx, Csy, color='red', s=60, zorder=6)
-
-# Center labels
-ax.text(Crx, Cry, "  Cr", fontsize=11, color='blue')
-ax.text(Csx, Csy, "  Cs", fontsize=11, color='red')
-
-# Line between centers (important in lecture diagram)
+# Line of centers (important in lecture)
 ax.plot([Crx, Csx], [Cry, Csy],
-        linestyle='--',
-        color='black',
-        linewidth=1.5,
-        label="Line of Centers")
+        linestyle='--', color='black', linewidth=1.2)
 
-# Origin point (Po)
-ax.scatter(0, 0, color='black', s=70, zorder=7)
-ax.text(0, 0, "  O", fontsize=11)
+# Origin
+ax.scatter(0, 0, color='black', s=50)
+ax.text(0, 0, " O", fontsize=12)
 
-ax.axhline(Qmax, linestyle='--', color='orange', label="Qmax")
-ax.axhline(Qmin, linestyle='--', color='orange', label="Qmin")
+# ======================================
+# Operating Points
+# ======================================
+ax.scatter(Pr, Qr, color='blue', s=120, edgecolors='black', zorder=7)
+ax.scatter(Ps, Qs, color='red', s=120, edgecolors='black', zorder=7)
 
-# Operating points (bigger & clearer)
-ax.scatter(Pr, Qr, color='blue', s=140,
-           edgecolors='black', zorder=5,
-           label="Receiving Point")
-ax.scatter(Ps, Qs, color='red', s=140,
-           edgecolors='black', zorder=5,
-           label="Sending Point")
+ax.text(Pr, Qr, "  k", fontsize=13, color='blue')
+ax.text(Ps, Qs, "  k'", fontsize=13, color='red')
 
-# Vectors
-scale = 0.06 * max(Rr, Rs)
-ax.arrow(0, 0, Pr, Qr,
-         head_width=scale,
-         color='blue',
-         length_includes_head=True)
-ax.arrow(0, 0, Ps, Qs,
-         head_width=scale,
-         color='red',
-         length_includes_head=True)
+# ======================================
+# Power Triangles (inside circles)
+# ======================================
+# Receiving triangle
+ax.plot([0, Pr], [0, 0], 'b')
+ax.plot([Pr, Pr], [0, Qr], 'b')
+ax.plot([0, Pr], [0, Qr], 'b--')
 
-# Labels for vectors
-ax.text(Pr, Qr, "  Sr", fontsize=13, color='blue')
-ax.text(Ps, Qs, "  Ss", fontsize=13, color='red')
+# Sending triangle
+ax.plot([0, Ps], [0, 0], 'r')
+ax.plot([Ps, Ps], [0, Qs], 'r')
+ax.plot([0, Ps], [0, Qs], 'r--')
 
-# Projection lines
-ax.plot([Pr, Pr], [0, Qr], 'b--')
-ax.plot([0, Pr], [Qr, Qr], 'b--')
-ax.plot([Ps, Ps], [0, Qs], 'r--')
-ax.plot([0, Ps], [Qs, Qs], 'r--')
+# ======================================
+# Power Factor Angles
+# ======================================
+phi_r = np.arctan2(Qr, Pr) if Pr != 0 else 0
+phi_s = np.arctan2(Qs, Ps) if Ps != 0 else 0
 
-# Transfer line
-ax.plot([Pr, Ps], [Qr, Qs], 'g', linewidth=2, label="Power Transfer")
+arc_radius = 0.15 * window
 
-# Stability limit
-ax.scatter(Pmax_calc, 0, color='purple', s=120)
+theta_r = np.linspace(0, phi_r, 40)
+ax.plot(arc_radius*np.cos(theta_r),
+        arc_radius*np.sin(theta_r),
+        color='blue', linewidth=2)
+
+ax.text(arc_radius*1.2*np.cos(phi_r/2),
+        arc_radius*1.2*np.sin(phi_r/2),
+        "φr", fontsize=13, color='blue')
+
+theta_s = np.linspace(0, phi_s, 40)
+ax.plot(arc_radius*np.cos(theta_s),
+        arc_radius*np.sin(theta_s),
+        color='red', linewidth=2)
+
+ax.text(arc_radius*1.2*np.cos(phi_s/2),
+        arc_radius*1.2*np.sin(phi_s/2),
+        "φs", fontsize=13, color='red')
+
+# ======================================
+# Stability Limit & Tangent at Pmax
+# ======================================
+ax.scatter(Pmax_calc, 0, color='purple', s=100, zorder=8)
 ax.text(Pmax_calc, 0,
-        f"  Pmax\n{Pmax_calc:.0f} MW",
+        f"  Pmax\n{Pmax_calc:.0f}",
         fontsize=12, color='purple')
 
-# Stability angle
-delta = np.degrees(np.angle(Vs) - np.angle(Vr))
-ax.text(Pr*0.6, Qr*0.6,
-        f"δ = {delta:.1f}°",
-        fontsize=13,
-        bbox=dict(facecolor='white', alpha=0.7))
-# ======================================
-# Arc for stability angle δ (Lecture style)
-# ======================================
-delta_rad = np.angle(Vs) - np.angle(Vr)
-
-arc_radius = 0.25 * max(abs(Pr), abs(Qr), abs(Ps), abs(Qs))
-theta_arc = np.linspace(0, delta_rad, 50)
-
-arc_x = arc_radius * np.cos(theta_arc)
-arc_y = arc_radius * np.sin(theta_arc)
-
-ax.plot(arc_x, arc_y, color='black', linewidth=2)
-ax.text(arc_radius*1.1*np.cos(delta_rad/2),
-        arc_radius*1.1*np.sin(delta_rad/2),
-        "δ",
-        fontsize=14)
+# Tangent line (vertical approximation from lecture)
+ax.plot([Pmax_calc, Pmax_calc],
+        [-window, window],
+        linestyle='--',
+        color='purple',
+        linewidth=1.5,
+        label="Stability Limit")
 
 # ======================================
-# Smart Academic Scaling (Stable View)
+# Transfer Line
 # ======================================
-max_P = max(
-    abs(Pr_circle).max(),
-    abs(Ps_circle).max(),
-    abs(Pmax_calc),
-    abs(Pr),
-    abs(Ps)
-)
+ax.plot([Pr, Ps], [Qr, Qs], 'g', linewidth=2)
 
-max_Q = max(
-    abs(Qr_circle).max(),
-    abs(Qs_circle).max(),
-    abs(Qr),
-    abs(Qs)
-)
+# Reactive limits
+ax.axhline(Qmax, linestyle='--', color='orange', linewidth=1)
+ax.axhline(Qmin, linestyle='--', color='orange', linewidth=1)
 
-window = max(max_P, max_Q) * 1.2
+# ======================================
+# Smart Scaling (important for clarity)
+# ======================================
+max_P = max(abs(Pr_circle).max(),
+            abs(Ps_circle).max(),
+            abs(Pmax_calc),
+            abs(Pr),
+            abs(Ps))
+
+max_Q = max(abs(Qr_circle).max(),
+            abs(Qs_circle).max(),
+            abs(Qr),
+            abs(Qs))
+
+window = max(max_P, max_Q) * 1.1
 
 ax.set_xlim(-window, window)
 ax.set_ylim(-window, window)
 
-# Formatting
-ax.grid(True, linestyle='--', alpha=0.4)
-ax.legend()
 ax.set_aspect('equal')
+ax.grid(True, linestyle='--', alpha=0.4)
 ax.set_xlabel("P (MW)", fontsize=12)
 ax.set_ylabel("Q (MVAR)", fontsize=12)
-ax.set_title("Combined Power Circle with Vectors", fontsize=16)
+ax.set_title("Power Circle Diagram (Lecture Style)", fontsize=15)
+ax.legend()
 
 st.pyplot(fig)
 
@@ -495,6 +490,7 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
 
 
 
