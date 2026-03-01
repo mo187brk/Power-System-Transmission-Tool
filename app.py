@@ -233,83 +233,76 @@ st.write("Operating Condition:", condition)
 st.write("Stability Margin:", f"{Margin:.2f} MW")
 
 # ======================================
-# الرسمة الاحترافية (مطابقة للمحاضرة)
+# Professional Power Circle (محاكاة كاملة للمحاضرة)
 # ======================================
 
-# حل مشكلة الـ NameError: بنعرف D بتساوي A لأن الخط متماثل
+# تعريف الثابت D لتجنب الـ NameError
 D = A 
 
-# 1. الحسابات الهندسية للمراكز (Centers)
-# زوايا ثوابت الخط
+# الحسابات الهندسية للمراكز
 alpha_rad = np.angle(A)
 beta_rad = np.angle(B)
 beta_deg = np.degrees(beta_rad)
-alpha_deg = np.degrees(alpha_rad)
 
-# مركز دائرة الاستقبال (نقطة n) -> الإحداثيات: -(A/B)*Vr^2
+# مركز دائرة الاستقبال n
 n_mag = (np.abs(A) / np.abs(B)) * (Vr_mag**2)
 nx, ny = -n_mag * np.cos(beta_rad - alpha_rad), n_mag * np.sin(beta_rad - alpha_rad)
 
-# مركز دائرة الإرسال (نقطة n') -> الإحداثيات: (D/B)*Vs^2
+# مركز دائرة الإرسال n'
 ns_mag = (np.abs(D) / np.abs(B)) * (Vs_mag**2)
 nsx, nsy = ns_mag * np.cos(beta_rad - alpha_rad), -ns_mag * np.sin(beta_rad - alpha_rad)
 
 fig, ax = plt.subplots(figsize=(12, 12))
 
-# 2. رسم الدوائر (نفس الحسابات الأصلية عندك بس بشكل منقط)
-ax.plot(Pr_circle, Qr_circle, color='purple', linestyle='--', alpha=0.3)
-ax.plot(Ps_circle, Qs_circle, color='purple', linestyle='--', alpha=0.3)
+# رسم الدوائر الأصلية المنقطة
+ax.plot(Pr_circle, Qr_circle, color='purple', linestyle='--', alpha=0.3, label='Receiving Circle')
+ax.plot(Ps_circle, Qs_circle, color='purple', linestyle='--', alpha=0.3, label='Sending Circle')
 
-# 3. رسم المحاور (Active & Reactive Power) باللون الأحمر
-ax.axhline(0, color='red', linewidth=1.2)
-ax.axvline(0, color='red', linewidth=1.2)
-ax.text(window*0.9, 5, 'Active power', color='black', fontsize=12, fontweight='bold')
-ax.text(5, window*0.9, 'Reactive power', color='black', fontsize=12, fontweight='bold', rotation=90)
+# رسم المحاور الأساسية
+ax.axhline(0, color='red', linewidth=1.5)
+ax.axvline(0, color='red', linewidth=1.5)
 
-# 4. المتجهات الرئيسية (Vectors)
-# المتجه من الأصل لـ n والمتجه من n لـ k
-ax.annotate('', xy=(0, 0), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2))
-ax.annotate('', xy=(Pr, Qr), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2))
+# رسم المتجهات (Vectors) مع رؤوس الأسهم
+ax.annotate('', xy=(0, 0), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2.5))
+ax.annotate('', xy=(Pr, Qr), xytext=(nx, ny), arrowprops=dict(arrowstyle='->', color='blue', lw=2.5))
+ax.annotate('', xy=(0, 0), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2.5))
+ax.annotate('', xy=(Ps, Qs), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2.5))
 
-# المتجه من الأصل لـ n' والمتجه من n' لـ k'
-ax.annotate('', xy=(0, 0), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2))
-ax.annotate('', xy=(Ps, Qs), xytext=(nsx, nsy), arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2))
+# إضافة نصوص التوضيح (Labels)
+ax.text(nx, ny, '  n', fontsize=16, color='blue', fontweight='bold')
+ax.text(Pr, Qr, '  k', fontsize=16, color='blue', fontweight='bold')
+ax.text(nsx, nsy, "  n'", fontsize=16, color='darkgreen', fontweight='bold')
+ax.text(Ps, Qs, "  k'", fontsize=16, color='darkgreen', fontweight='bold')
 
-# 5. تسمية النقاط (Labels) كما في المحاضرة
-ax.text(nx, ny, ' n', fontsize=16, color='blue', fontweight='bold', va='bottom')
-ax.text(Pr, Qr, ' k', fontsize=16, color='blue', fontweight='bold', va='top')
-ax.text(nsx, nsy, " n'", fontsize=16, color='darkgreen', fontweight='bold', va='top')
-ax.text(Ps, Qs, " k'", fontsize=16, color='darkgreen', fontweight='bold', va='bottom')
+# كتابة القوانين على المتجهات كما في المحاضرة
+ax.text(nx/2, ny/2, r'$\frac{A}{B}V_r^2$', fontsize=14, color='blue', backgroundcolor='white')
+ax.text((nx+Pr)/2, (ny+Qr)/2, r'$\frac{V_s V_r}{B}$', fontsize=14, color='blue', backgroundcolor='white')
 
-# تسمية المتجهات (القيم)
-ax.text(nx/2, ny/2, r'$\frac{A}{B}V_r^2$', fontsize=14, color='blue', ha='right')
-ax.text((nx+Pr)/2, (ny+Qr)/2, r'$\frac{V_s V_r}{B}$', fontsize=14, color='blue')
-
-# 6. رسم الزوايا (Arcs)
-# زاوية beta - alpha
+# رسم الزوايا (Arcs)
 from matplotlib.patches import Arc
-angle_ba = Arc((0, 0), n_mag*0.4, n_mag*0.4, theta1=180-np.degrees(beta_rad-alpha_rad), theta2=180, color='red', lw=1.5)
-ax.add_patch(angle_ba)
-ax.text(nx*0.2, ny*0.1, r'$\beta-\alpha$', color='red', fontsize=13)
+# زاوية beta - alpha
+arc1 = Arc((0, 0), n_mag*0.4, n_mag*0.4, theta1=180-np.degrees(beta_rad-alpha_rad), theta2=180, color='red', lw=2)
+ax.add_patch(arc1)
+ax.text(nx*0.25, ny*0.15, r'$\beta-\alpha$', color='red', fontsize=13, fontweight='bold')
 
-# زاوية delta (بين k و الخط العمودي لـ n)
+# زاوية delta
 delta_val = np.degrees(np.angle(Vs) - np.angle(Vr))
-angle_delta = Arc((nx, ny), n_mag*0.5, n_mag*0.5, theta1=-np.degrees(beta_rad-alpha_rad), 
-                  theta2=-np.degrees(beta_rad-alpha_rad)+delta_val, color='magenta', lw=2)
-ax.add_patch(angle_delta)
-ax.text(nx + (Pr-nx)*0.3, ny + (Qr-ny)*0.3, r'$\delta$', color='magenta', fontsize=15, fontweight='bold')
+arc2 = Arc((nx, ny), n_mag*0.5, n_mag*0.5, theta1=-np.degrees(beta_rad-alpha_rad), 
+           theta2=-np.degrees(beta_rad-alpha_rad)+delta_val, color='magenta', lw=2)
+ax.add_patch(arc2)
+ax.text(nx + (Pr-nx)*0.2, ny + (Qr-ny)*0.2, r'$\delta$', color='magenta', fontsize=15, fontweight='bold')
 
-# 7. خط الربط (Power Transfer Line)
-ax.plot([Pr, Ps], [Qr, Qs], 'g', linewidth=2, label="Transfer Line")
-
-# 8. ضبط الحدود والشكل النهائي
-ax.set_xlim(-window*1.5, window*1.5)
-ax.set_ylim(-window*1.5, window*1.5)
+# تنسيق النهائي للرسمة
+ax.set_xlim(-window*1.8, window*1.8)
+ax.set_ylim(-window*1.8, window*1.8)
 ax.set_aspect('equal')
-ax.grid(True, linestyle=':', alpha=0.3)
-ax.set_title("Combined Sending and Receiving-end Power Circle Diagram", fontsize=16, pad=20)
+ax.grid(True, linestyle=':', alpha=0.4)
+ax.set_title("Combined Sending and Receiving-end Power Circle Diagram", fontsize=18, pad=20)
+ax.set_xlabel("P (MW)", fontsize=12)
+ax.set_ylabel("Q (MVAR)", fontsize=12)
 
 st.pyplot(fig)
+
 # ======================================
 # Voltage Along Line
 # ======================================
@@ -325,4 +318,5 @@ ax2.set_ylabel("Voltage (kV)")
 ax2.set_title("Voltage Along the Line")
 ax2.grid()
 st.pyplot(fig2)
+
 
