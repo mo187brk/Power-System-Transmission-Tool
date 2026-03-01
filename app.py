@@ -394,6 +394,25 @@ ax.set_xlabel("P (MW)", fontsize=12)
 ax.set_ylabel("Q (MVAR)", fontsize=12)
 ax.set_title("Combined Power Circle with Vectors", fontsize=16)
 
+# ======================================
+# Academic Enhancements for Power Circle
+# ======================================
+
+# رسم مراكز الدوائر
+ax.scatter(Crx, Cry, color='blue', s=40)
+ax.scatter(Csx, Csy, color='red', s=40)
+
+# تسمية المراكز
+ax.text(Crx, Cry, "  Cr", color='blue')
+ax.text(Csx, Csy, "  Cs", color='red')
+
+# خط بين المراكز
+ax.plot([Crx, Csx], [Cry, Csy], 'k--', linewidth=1.5, label="Center Line")
+
+# نقطة الأصل
+ax.scatter(0, 0, color='black', s=40)
+ax.text(0, 0, "  O")
+
 st.pyplot(fig)
 
 
@@ -414,6 +433,7 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
 
 
 
