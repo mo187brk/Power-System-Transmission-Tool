@@ -311,7 +311,22 @@ if run_anim:
     # Smart zoom
     focus_P = max(abs(Pr), abs(Ps), Pmax_calc)
     focus_Q = max(abs(Qr), abs(Qs))
-    window_anim = max(focus_P, focus_Q) * 1.5
+    
+max_P_anim = max(
+    abs(Pr_circle).max(),
+    abs(Ps_circle).max(),
+    abs(Pmax_calc)
+)
+
+max_Q_anim = max(
+    abs(Qr_circle).max(),
+    abs(Qs_circle).max()
+)
+
+window_anim = max(max_P_anim, max_Q_anim) * 1.2
+
+ax_anim.set_xlim(-window_anim, window_anim)
+ax_anim.set_ylim(-window_anim, window_anim)
 
     ax_anim.set_xlim(-window_anim, window_anim)
     ax_anim.set_ylim(-window_anim, window_anim)
@@ -405,8 +420,26 @@ ax.text(Pr*0.6, Qr*0.6,
         fontsize=13,
         bbox=dict(facecolor='white', alpha=0.7))
 
-# Improved Smart Zoom
-window = max(focus*2.2, 0.25*max(Rr, Rs))
+# ======================================
+# Smart Academic Scaling (Stable View)
+# ======================================
+max_P = max(
+    abs(Pr_circle).max(),
+    abs(Ps_circle).max(),
+    abs(Pmax_calc),
+    abs(Pr),
+    abs(Ps)
+)
+
+max_Q = max(
+    abs(Qr_circle).max(),
+    abs(Qs_circle).max(),
+    abs(Qr),
+    abs(Qs)
+)
+
+window = max(max_P, max_Q) * 1.2
+
 ax.set_xlim(-window, window)
 ax.set_ylim(-window, window)
 
@@ -438,6 +471,7 @@ ax2.set_title("Voltage Along the Line")
 ax2.grid(True, linestyle='--', alpha=0.4)
 
 st.pyplot(fig2)
+
 
 
 
