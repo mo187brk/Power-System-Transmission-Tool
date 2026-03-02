@@ -84,7 +84,8 @@ with c1:
     mode = st.selectbox("Operating Mode", ["Load", "No Load"])
 with c2:
     if mode == "Load":
-        Pr = st.number_input("Receiving Power Pr (MW)", value=992.70)
+        Pr = st.number_input("Receiving Power Pr (MW)", value=100
+                            )
     else:
         Pr = 0.0
 with c3:
@@ -406,5 +407,6 @@ with tab5:
                 st.rerun()
     else:
         st.info("No cases saved yet. Adjust parameters and click 'Save Condition'.")
+
 
 
