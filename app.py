@@ -511,23 +511,32 @@ with tab1:
             fontweight='bold'
         )
 
-        # ==================================================
-        # Smart Scaling
-        # ==================================================
+     # ==================================================
+# Smart Dynamic Scaling
+# ==================================================
 
-        x_max = max(abs(Pr), abs(Ps), abs(Pmax_calc)) * 1.6
-        y_max = max(abs(Qr), abs(Qs), abs(Qmax)) * 1.6
+visible_p = max(abs(Pr), abs(Ps))
+visible_q = max(abs(Qr), abs(Qs), abs(Qmax)*0.4)
 
-        if x_max < 100:
-            x_max = 100
+# Light loading
+if Loading < 40:
+    x_max = max(visible_p * 2.5, 250)
+    y_max = max(visible_q * 2.5, 250)
 
-        if y_max < 100:
-            y_max = 100
+# Medium loading
+elif Loading < 80:
+    x_max = max(abs(Pmax_calc)*0.7, visible_p*2)
+    y_max = max(visible_q * 2.2, 300)
 
-        ax.set_xlim(-0.8*x_max, x_max)
-        ax.set_ylim(-y_max, y_max)
+# Heavy loading / near stability limit
+else:
+    x_max = max(abs(Pmax_calc)*1.2, visible_p*1.5)
+    y_max = max(visible_q * 2, 350)
 
-        ax.set_aspect('equal')
+ax.set_xlim(-0.3*x_max, x_max)
+ax.set_ylim(-y_max, y_max)
+
+ax.set_aspect('equal')
 
         # ==================================================
         # Legend
