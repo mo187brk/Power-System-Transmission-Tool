@@ -511,32 +511,30 @@ with tab1:
             fontweight='bold'
         )
 
-     # ==================================================
+# ==================================================
 # Smart Dynamic Scaling
 # ==================================================
 
 visible_p = max(abs(Pr), abs(Ps))
 visible_q = max(abs(Qr), abs(Qs), abs(Qmax)*0.4)
 
-# Light loading
+# لو التشغيل خفيف جدًا
 if Loading < 40:
     x_max = max(visible_p * 2.5, 250)
     y_max = max(visible_q * 2.5, 250)
 
-# Medium loading
+# تشغيل متوسط
 elif Loading < 80:
     x_max = max(abs(Pmax_calc)*0.7, visible_p*2)
     y_max = max(visible_q * 2.2, 300)
 
-# Heavy loading / near stability limit
+# قريب من الاستقرار
 else:
     x_max = max(abs(Pmax_calc)*1.2, visible_p*1.5)
     y_max = max(visible_q * 2, 350)
 
 ax.set_xlim(-0.3*x_max, x_max)
 ax.set_ylim(-y_max, y_max)
-
-ax.set_aspect('equal')
 
         # ==================================================
         # Legend
