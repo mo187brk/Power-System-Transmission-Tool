@@ -572,5 +572,3 @@ with tab5:
                 st.rerun()
     else:
         st.info("No cases saved yet.")
-    else:
-        st.info("No cases saved yet. Adjust parameters and click 'Save Condition'.")
