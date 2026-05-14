@@ -518,17 +518,17 @@ with tab1:
 visible_p = max(abs(Pr), abs(Ps))
 visible_q = max(abs(Qr), abs(Qs), abs(Qmax)*0.4)
 
-# لو التشغيل خفيف جدًا
+# Light loading
 if Loading < 40:
     x_max = max(visible_p * 2.5, 250)
     y_max = max(visible_q * 2.5, 250)
 
-# تشغيل متوسط
+# Medium loading
 elif Loading < 80:
     x_max = max(abs(Pmax_calc)*0.7, visible_p*2)
     y_max = max(visible_q * 2.2, 300)
 
-# قريب من الاستقرار
+# Heavy loading
 else:
     x_max = max(abs(Pmax_calc)*1.2, visible_p*1.5)
     y_max = max(visible_q * 2, 350)
@@ -536,19 +536,21 @@ else:
 ax.set_xlim(-0.3*x_max, x_max)
 ax.set_ylim(-y_max, y_max)
 
-        # ==================================================
-        # Legend
-        # ==================================================
+ax.set_aspect('equal')
 
-        leg = ax.legend(
-            facecolor='#1e2233',
-            edgecolor='#444a5e',
-            fontsize=10
-        )
+# ==================================================
+# Legend
+# ==================================================
 
-        fix_legend_color(leg)
+leg = ax.legend(
+    facecolor='#1e2233',
+    edgecolor='#444a5e',
+    fontsize=10
+)
 
-        st.pyplot(fig)
+fix_legend_color(leg)
+
+st.pyplot(fig)
 
     with col_info:
 
