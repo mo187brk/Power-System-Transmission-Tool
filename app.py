@@ -240,333 +240,94 @@ def fix_legend_color(legend):
             text.set_color('white')
 
 with tab1:
-
-    col_plot, col_info = st.columns([3,1])
-
+    col_plot, col_info = st.columns([3, 1])
     with col_plot:
+        alpha_ang = np.angle(A); beta_ang = np.angle(B); ratio = np.abs(A/B) if B != 0 else 0
+        Rr = ratio*(Vr_mag**2); theta_r = beta_ang - alpha_ang
+        Crx = Rr*np.cos(theta_r); Cry = Rr*np.sin(theta_r)
+        Vs_mag = np.abs(Vs); Rs = ratio*(Vs_mag**2)
+        Csx = Rs*np.cos(beta_ang); Csy = Rs*np.sin(beta_ang)
+        
+        theta_plot = np.linspace(0, 2*np.pi, 400)
+        Pr_circle = Crx + Rr*np.cos(theta_plot); Qr_circle = Cry + Rr*np.sin(theta_plot)
+        Ps_circle = Csx + Rs*np.cos(theta_plot); Qs_circle = Csy + Rs*np.sin(theta_plot)
 
-        # ==================================================
-        # Combined Power Circle Diagram
-        # ==================================================
+        if run_anim:
+            st.markdown("<h5 style='color:white; text-align:center;'>Operating Point Movement (Stability Animation)</h5>", unsafe_allow_html=True)
+            load_values = np.linspace(0, Pmax_calc*1.2, 40)
+            fig_anim, ax_anim = plt.subplots(figsize=(8,8))
+            style_dark_plot(ax_anim, fig_anim, "", "Active Power P (MW)", "Reactive Power Q (MVAR)")
+            
+            ax_anim.plot(Pr_circle, Qr_circle, '#00d2ff', linewidth=2, label='Receiving', alpha=0.6)
+            ax_anim.plot(Ps_circle, Qs_circle, '#ff8d72', linewidth=2, label='Sending', alpha=0.6)
+            
+            for P_test in load_values:
+                Q_test = P_test * np.tan(phi) if PF != 0 else 0
+                color = '#5cb85c' if P_test <= Pmax_calc else '#d9534f'
+                ax_anim.scatter(P_test, Q_test, color=color, s=25, zorder=5)
+                
+            ax_anim.scatter(Pmax_calc, 0, color='#e14eca', s=100, zorder=6)
+            ax_anim.text(Pmax_calc, 0, f' Pmax\n{Pmax_calc:.0f}', color='#e14eca', fontsize=12)
+            
+            focus_P = max(abs(Pr), abs(Ps), Pmax_calc)
+            focus_Q = max(abs(Qr), abs(Qs))
+            window_anim = max(focus_P, focus_Q) * 1.5
+            ax_anim.set_xlim(-window_anim, window_anim)
+            ax_anim.set_ylim(-window_anim, window_anim)
+            ax_anim.set_aspect('equal')
+            ax_anim.axhline(0, color='#626b82', linewidth=1.2)
+            ax_anim.axvline(0, color='#626b82', linewidth=1.2)
+            
+            leg = ax_anim.legend(facecolor='#1e2233', edgecolor='#444a5e')
+            fix_legend_color(leg)
+            st.pyplot(fig_anim)
+            
+        else:
+            fig, ax = plt.subplots(figsize=(8,8))
+            style_dark_plot(ax, fig, "Combined Power Circle with Vectors", "Active Power P (MW)", "Reactive Power Q (MVAR)")
+            
+            ax.plot(Pr_circle, Qr_circle, '#00d2ff', linewidth=2, label="Receiving")
+            ax.plot(Ps_circle, Qs_circle, '#ff8d72', linewidth=2, label="Sending")
+            ax.axhline(Qmax, linestyle='--', color='#e14eca', label="Qmax", alpha=0.7)
+            ax.axhline(Qmin, linestyle='--', color='#e14eca', label="Qmin", alpha=0.7)
 
-        alpha_ang = np.angle(A)
-        beta_ang  = np.angle(B)
+            ax.scatter(Pr, Qr, color='#00d2ff', s=120, edgecolors='white', zorder=5)
+            ax.scatter(Ps, Qs, color='#ff8d72', s=120, edgecolors='white', zorder=5)
 
-        ratio = np.abs(A/B) if B != 0 else 0
+            scale = 0.06 * max(Rr, Rs) if max(Rr, Rs) > 0 else 1
+            ax.arrow(0, 0, Pr, Qr, head_width=scale, color='#00d2ff', length_includes_head=True)
+            ax.arrow(0, 0, Ps, Qs, head_width=scale, color='#ff8d72', length_includes_head=True)
 
-        # Receiving circle
-        Rr = ratio * (Vr_mag**2)
-        theta_r = beta_ang - alpha_ang
+            ax.text(Pr, Qr, "  Sr", fontsize=12, color='#00d2ff')
+            ax.text(Ps, Qs, "  Ss", fontsize=12, color='#ff8d72')
+            
+            ax.plot([Pr, Ps], [Qr, Qs], '#5cb85c', linewidth=2, label="Power Transfer")
+            ax.scatter(Pmax_calc, 0, color='#e14eca', s=120)
+            ax.text(Pmax_calc, 0, f" Pmax\n{Pmax_calc:.0f}", fontsize=11, color='#e14eca')
 
-        Crx = Rr*np.cos(theta_r)
-        Cry = Rr*np.sin(theta_r)
+            delta_ang = np.degrees(np.angle(Vs) - np.angle(Vr))
+            ax.text(Pr*0.5, Qr*0.5, f"δ = {delta_ang:.1f}°", color='white', fontsize=11, bbox=dict(facecolor='#1e2233', alpha=0.8, edgecolor='#444a5e'))
 
-        # Sending circle
-        Vs_mag = np.abs(Vs)
-
-        Rs = ratio * (Vs_mag**2)
-
-        Csx = Rs*np.cos(beta_ang)
-        Csy = Rs*np.sin(beta_ang)
-
-        theta_plot = np.linspace(0, 2*np.pi, 600)
-
-        Pr_circle = Crx + Rr*np.cos(theta_plot)
-        Qr_circle = Cry + Rr*np.sin(theta_plot)
-
-        Ps_circle = Csx + Rs*np.cos(theta_plot)
-        Qs_circle = Csy + Rs*np.sin(theta_plot)
-
-        # ==================================================
-        # Figure
-        # ==================================================
-
-        fig, ax = plt.subplots(figsize=(9,9))
-
-        style_dark_plot(
-            ax,
-            fig,
-            "Combined Sending and Receiving-end Power Circle Diagram",
-            "Active Power P (MW)",
-            "Reactive Power Q (MVAR)"
-        )
-
-        # ==================================================
-        # Main Axes
-        # ==================================================
-
-        ax.axhline(0, color='white', linewidth=1.3)
-        ax.axvline(0, color='white', linewidth=1.3)
-
-        # ==================================================
-        # Circles
-        # ==================================================
-
-        ax.plot(
-            Pr_circle,
-            Qr_circle,
-            color='#00d2ff',
-            linewidth=2.5,
-            label='Receiving-end Circle'
-        )
-
-        ax.plot(
-            Ps_circle,
-            Qs_circle,
-            color='#ff8d72',
-            linewidth=2.5,
-            label='Sending-end Circle'
-        )
-
-        # ==================================================
-        # Operating Points
-        # ==================================================
-
-        ax.scatter(
-            Pr,
-            Qr,
-            s=140,
-            color='#00d2ff',
-            edgecolors='white',
-            zorder=5
-        )
-
-        ax.scatter(
-            Ps,
-            Qs,
-            s=140,
-            color='#ff8d72',
-            edgecolors='white',
-            zorder=5
-        )
-
-        ax.text(
-            Pr + 8,
-            Qr + 5,
-            "Pr",
-            color='#00d2ff',
-            fontsize=12,
-            fontweight='bold'
-        )
-
-        ax.text(
-            Ps + 8,
-            Qs + 5,
-            "Ps",
-            color='#ff8d72',
-            fontsize=12,
-            fontweight='bold'
-        )
-
-        # ==================================================
-        # Power Vectors
-        # ==================================================
-
-        ax.arrow(
-            0,
-            0,
-            Pr,
-            Qr,
-            width=1.5,
-            head_width=12,
-            length_includes_head=True,
-            color='#00d2ff',
-            alpha=0.9
-        )
-
-        ax.arrow(
-            0,
-            0,
-            Ps,
-            Qs,
-            width=1.5,
-            head_width=12,
-            length_includes_head=True,
-            color='#ff8d72',
-            alpha=0.9
-        )
-
-        # ==================================================
-        # Transfer Line
-        # ==================================================
-
-        ax.plot(
-            [Pr, Ps],
-            [Qr, Qs],
-            color='#5cb85c',
-            linewidth=2.5,
-            linestyle='-',
-            label='Power Transfer'
-        )
-
-        # ==================================================
-        # Projection Lines
-        # ==================================================
-
-        ax.plot([Pr, Pr], [0, Qr],
-                linestyle='--',
-                color='#00d2ff',
-                alpha=0.7)
-
-        ax.plot([0, Pr], [Qr, Qr],
-                linestyle='--',
-                color='#00d2ff',
-                alpha=0.7)
-
-        ax.plot([Ps, Ps], [0, Qs],
-                linestyle='--',
-                color='#ff8d72',
-                alpha=0.7)
-
-        ax.plot([0, Ps], [Qs, Qs],
-                linestyle='--',
-                color='#ff8d72',
-                alpha=0.7)
-
-        # ==================================================
-        # Stability Limit
-        # ==================================================
-
-        ax.scatter(
-            Pmax_calc,
-            0,
-            s=180,
-            color='#e14eca',
-            edgecolors='white',
-            zorder=6
-        )
-
-        ax.text(
-            Pmax_calc + 10,
-            10,
-            f"Pmax\n{Pmax_calc:.0f} MW",
-            color='#e14eca',
-            fontsize=11,
-            fontweight='bold'
-        )
-
-        # ==================================================
-        # Reactive Limits
-        # ==================================================
-
-        ax.axhline(
-            Qmax,
-            linestyle='--',
-            linewidth=1.5,
-            color='#e14eca',
-            alpha=0.6,
-            label='Qmax'
-        )
-
-        ax.axhline(
-            Qmin,
-            linestyle='--',
-            linewidth=1.5,
-            color='#e14eca',
-            alpha=0.6,
-            label='Qmin'
-        )
-
-        # ==================================================
-        # Angles
-        # ==================================================
-
-        delta_ang = np.degrees(np.angle(Vs) - np.angle(Vr))
-
-        phi_r = np.degrees(np.arctan2(Qr, Pr)) if Pr != 0 else 0
-        phi_s = np.degrees(np.arctan2(Qs, Ps)) if Ps != 0 else 0
-
-        ax.text(
-            Pr*0.55,
-            Qr*0.55,
-            f"φr = {phi_r:.1f}°",
-            color='white',
-            fontsize=11,
-            bbox=dict(
-                facecolor='#1e2233',
-                alpha=0.8,
-                edgecolor='#444a5e'
-            )
-        )
-
-        ax.text(
-            Ps*0.55,
-            Qs*0.55,
-            f"φs = {phi_s:.1f}°",
-            color='white',
-            fontsize=11,
-            bbox=dict(
-                facecolor='#1e2233',
-                alpha=0.8,
-                edgecolor='#444a5e'
-            )
-        )
-
-        ax.text(
-            (Pr+Ps)/2,
-            (Qr+Qs)/2 + 15,
-            f"δ = {delta_ang:.1f}°",
-            color='#ffd166',
-            fontsize=12,
-            fontweight='bold'
-        )
-
-# ==================================================
-# Smart Dynamic Scaling
-# ==================================================
-
-visible_p = max(abs(Pr), abs(Ps))
-visible_q = max(abs(Qr), abs(Qs), abs(Qmax)*0.4)
-
-# Light loading
-if Loading < 40:
-    x_max = max(visible_p * 2.5, 250)
-    y_max = max(visible_q * 2.5, 250)
-
-# Medium loading
-elif Loading < 80:
-    x_max = max(abs(Pmax_calc)*0.7, visible_p*2)
-    y_max = max(visible_q * 2.2, 300)
-
-# Heavy loading
-else:
-    x_max = max(abs(Pmax_calc)*1.2, visible_p*1.5)
-    y_max = max(visible_q * 2, 350)
-
-ax.set_xlim(-0.3*x_max, x_max)
-ax.set_ylim(-y_max, y_max)
-
-ax.set_aspect('equal')
-
-# ==================================================
-# Legend
-# ==================================================
-
-leg = ax.legend(
-    facecolor='#1e2233',
-    edgecolor='#444a5e',
-    fontsize=10
-)
-
-fix_legend_color(leg)
-
-st.pyplot(fig)
+            focus = max(abs(Pr), abs(Ps), abs(Qr), abs(Qs))
+            window = max(focus*2.2, 0.25*max(Rr, Rs)) if focus > 0 else 100
+            ax.set_xlim(-window, window)
+            ax.set_ylim(-window, window)
+            ax.set_aspect('equal')
+            ax.axhline(0, color='#626b82', linewidth=1.2)
+            ax.axvline(0, color='#626b82', linewidth=1.2)
+            
+            leg = ax.legend(facecolor='#1e2233', edgecolor='#444a5e')
+            fix_legend_color(leg)
+            st.pyplot(fig)
 
     with col_info:
-
         st.markdown("#### Point Details")
-
-        st.info(f"Pr = {Pr:.2f} MW")
-        st.info(f"Qr = {Qr:.2f} MVAR")
-
-        st.info(f"Ps = {Ps:.2f} MW")
-        st.info(f"Qs = {Qs:.2f} MVAR")
-
-        st.info(f"Pmax = {Pmax_calc:.2f} MW")
-
-        st.info(f"δ = {delta_ang:.2f}°")
-
-        st.info(f"Stability Margin = {Margin:.2f} MW")
+        st.info(f"**Pr:** {Pr:.2f} MW")
+        st.info(f"**Qr:** {Qr:.2f} MVAR")
+        st.info(f"**Ps:** {Ps:.2f} MW")
+        st.info(f"**Qs:** {Qs:.2f} MVAR")
+        st.info(f"**Pmax:** {Pmax_calc:.2f} MW")
+        st.info(f"**Margin:** {Margin:.2f} MW")
 
 with tab2:
     st.markdown("#### PV Curve (Voltage Stability)")
@@ -646,6 +407,5 @@ with tab5:
                 st.rerun()
     else:
         st.info("No cases saved yet. Adjust parameters and click 'Save Condition'.")
-
 
 
