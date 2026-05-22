@@ -290,116 +290,131 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 # ─────────────────────────────────────────────────────────
-# TAB 1 — Power Circle Diagram (MATCHING LECTURE MANUAL)
+# TAB 1 — Power Circle Diagram (VECTORS & PHASORS STYLE)
 # ─────────────────────────────────────────────────────────
 with tab1:
     col_plot, col_info = st.columns([3, 1])
 
     with col_plot:
-        # مصفوفة الزوايا لرسم محيط الدوائر كاملة
-        theta_arr = np.linspace(0, 2 * np.pi, 500)
-        
-        # حساب إحداثيات الدوائر بناءً على المعادلات الرسمية
-        Pr_circle = n_rx + R_circle * np.cos(theta_arr)
-        Qr_circle = n_ry + R_circle * np.sin(theta_arr)
-        
-        Ps_circle = n_sx + R_circle * np.cos(theta_arr)
-        Qs_circle = n_sy + R_circle * np.sin(theta_arr)
-
         if run_anim:
             st.markdown(
                 "<h5 style='color:white;text-align:center;'>Stability Animation</h5>",
                 unsafe_allow_html=True
             )
-            # أنيميشن الاستقرار الحركي
-            load_vals = np.linspace(0, Pmax_calc * 1.2, 40)
+            # مصفوفة الزوايا لرسم قوس توضيحي متحرك
+            theta_arr = np.linspace(0, 2 * np.pi, 100)
+            Pr_circle = n_rx + R_circle * np.cos(theta_arr)
+            Qr_circle = n_ry + R_circle * np.sin(theta_arr)
+            
             fig_a, ax_a = plt.subplots(figsize=(8, 8))
             style_dark_plot(ax_a, fig_a, "", "Active Power P (MW)", "Reactive Power Q (MVAR)")
-            ax_a.plot(Pr_circle, Qr_circle, '#00d2ff', lw=2, label='RPCD', alpha=0.7)
-            ax_a.plot(Ps_circle, Qs_circle, '#ff8d72', lw=2, label='SPCD', alpha=0.7)
+            ax_a.plot(Pr_circle, Qr_circle, '#00d2ff', lw=1.5, ls=':', alpha=0.5)
+            
+            load_vals = np.linspace(0, Pmax_calc * 1.2, 40)
             for P_t in load_vals:
                 Q_t = P_t * np.tan(phi) if PF > 0 else 0
                 col = '#5cb85c' if P_t <= Pmax_calc else '#d9534f'
                 ax_a.scatter(P_t, Q_t, color=col, s=25, zorder=5)
-            ax_a.scatter(Pmax_calc, n_ry, color='#e14eca', s=130, zorder=6, marker='^')
-            ax_a.axhline(n_ry, color='#626b82', lw=1.2, ls=':')
+            ax_a.axhline(0, color='#626b82', lw=1.2)
+            ax_a.axvline(0, color='#626b82', lw=1.2)
             focus = max(abs(Pmax_calc), R_circle) * 1.5
             ax_a.set_xlim(-focus * 0.5, focus * 1.3)
             ax_a.set_ylim(-focus, focus)
             ax_a.set_aspect('equal', adjustable='box')
-            leg = ax_a.legend(facecolor='#1e2233', edgecolor='#444a5e')
-            fix_legend_color(leg)
             st.pyplot(fig_a)
 
         else:
             fig, ax = plt.subplots(figsize=(9, 9))
             style_dark_plot(ax, fig,
-                            "Combined Power Circle Diagram",
-                            "Active Power (Active power)",
-                            "Reactive Power (Reactive power)")
+                            "Combined Power Phasor Diagram",
+                            "Active power",
+                            "Reactive power")
 
-            # 1. رسم المحاور المرجعية الأساسية المتقاطعة عند الصفر المرجعي للقدرة
+            # 1. رسم المحاور الأساسية المتقاطعة عند نقطة الأصل (Origin 0,0)
             ax.axhline(0, color='#626b82', lw=1.5, zorder=2)
             ax.axvline(0, color='#626b82', lw=1.5, zorder=2)
+            ax.text(R_circle*0.02, R_circle*0.02, 'O (Origin)', color='white', fontsize=10, fontweight='bold')
 
-            # 2. رسم أقواط الدوائر (Receiving-end & Sending-end) بوضوح عالٍ
-            ax.plot(Pr_circle, Qr_circle, color='#00d2ff', lw=2.5, label='Receiving-end Power Circle Diagram', zorder=3)
-            ax.plot(Ps_circle, Qs_circle, color='#ff8d72', lw=2.5, label='Sending-end Power Circle Diagram', zorder=3)
+            # 2. رسم المتجهات الأساسية من نقطة الأصل إلى مراكز القدرة (Base Vectors)
+            # متجه مركز الاستقبال n_r بطول AV_r^2 / B وزاوية (beta - alpha) لأسفل
+            ax.annotate("", xy=(n_rx, n_ry), xytext=(0, 0),
+                        arrowprops=dict(arrowstyle="->", color="#00d2ff", lw=2.5, ls="-"))
+            # متجه مركز الإرسال n_s بطول DV_s^2 / B وزاوية (beta - delta)
+            ax.annotate("", xy=(n_sx, n_sy), xytext=(0, 0),
+                        arrowprops=dict(arrowstyle="->", color="#ff8d72", lw=2.5, ls="-"))
 
-            # 3. رسم خطوط الزوايا المرجعية للأقطار (خطوط التناظر الهندسية بيتا - ألفا)
-            ax.plot([0, n_rx], [0, n_ry], color='#626b82', ls='-.', lw=1.2, zorder=2)
-            ax.plot([0, n_sx], [0, n_sy], color='#626b82', ls='-.', lw=1.2, zorder=2)
+            # تسمية أضلاع المراكز الحاكمة طبقاً للمحاضرة
+            ax.text(n_rx * 0.5, n_ry * 0.5 - (R_circle*0.04), r'$\frac{A \cdot V_r^2}{B}$', 
+                    color='#00d2ff', fontsize=14, fontweight='bold', horizontalalignment='center')
+            ax.text(n_sx * 0.5, n_sy * 0.5 + (R_circle*0.04), r'$\frac{D \cdot V_s^2}{B}$', 
+                    color='#ff8d72', fontsize=14, fontweight='bold', horizontalalignment='center')
 
-            # 4. توقيع نقطة المراكز بالرمز الصريح للمحاضرة "n" لكل دائرة
-            ax.scatter(n_rx, n_ry, color='#00d2ff', s=100, marker='o', edgecolors='white', zorder=6)
-            ax.scatter(n_sx, n_sy, color='#ff8d72', s=100, marker='o', edgecolors='white', zorder=6)
-            ax.text(n_rx, n_ry - (R_circle*0.07), ' n_r (Center)', color='#00d2ff', fontsize=11, fontweight='bold')
-            ax.text(n_sx, n_sy + (n_ry*0.05), ' n_s (Center)', color='#ff8d72', fontsize=11, fontweight='bold')
+            # 3. توقيع المراكز بنقاط واضحة بالرمز "n" المستخدم في المحاضرة
+            ax.scatter(n_rx, n_ry, color='#00d2ff', s=100, zorder=6, edgecolors='white')
+            ax.scatter(n_sx, n_sy, color='#ff8d72', s=100, zorder=6, edgecolors='white')
+            ax.text(n_rx, n_ry - (R_circle*0.07), 'n_r (Center)', color='#00d2ff', fontsize=11, fontweight='bold')
+            ax.text(n_sx, n_sy + (R_circle*0.05), 'n_s (Center)', color='#ff8d72', fontsize=11, fontweight='bold')
 
-            # 5. رسم خطوط أنصاف الأقطار الفعلية المتجهة لنقاط التحميل (V_r * V_s / B)
-            ax.plot([n_rx, Pr], [n_ry, Qr], color='#00d2ff', ls='--', lw=1.5, zorder=4)
-            ax.plot([n_sx, Ps], [n_sy, Qs], color='#ff8d72', ls='--', lw=1.5, zorder=4)
+            # 4. رسم متجهات أنصاف الأقطار الحرة الواصلة بنقاط التشغيل (Radius Vectors)
+            # المتجه من n_r إلى S_r والمتجه من n_s إلى S_s بطول مشترك يساوي V_r * V_s / B
+            ax.annotate("", xy=(Pr, Qr), xytext=(n_rx, n_ry),
+                        arrowprops=dict(arrowstyle="->", color="#00d2ff", lw=2, linestyle="--"))
+            ax.annotate("", xy=(Ps, Qs), xytext=(n_sx, n_sy),
+                        arrowprops=dict(arrowstyle="->", color="#ff8d72", lw=2, linestyle="--"))
 
-            # 6. رسم خط تدفق وتوصيل القدرة الرأسي الهام المتكون بين النقطتين
-            ax.plot([Pr, Ps], [Qr, Qs], color='#5cb85c', lw=2, ls='-', label='Power Transfer Line', zorder=5)
+            # تسمية أضلاع نصف القطر الحرة
+            ax.text((n_rx + Pr)*0.5 + (R_circle*0.03), (n_ry + Qr)*0.5, r'$\frac{V_r \cdot V_s}{B}$', 
+                    color='#00d2ff', fontsize=12)
+            ax.text((n_sx + Ps)*0.5 + (R_circle*0.03), (n_sy + Qs)*0.5, r'$\frac{V_r \cdot V_s}{B}$', 
+                    color='#ff8d72', fontsize=12)
 
-            # 7. توقيع متجهات الأحمال المركبة الافتراضية (S_r & S_s) من نقطة الأصل (0,0)
-            ax.annotate("", xy=(Pr, Qr), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#00d2ff", lw=2))
-            ax.annotate("", xy=(Ps, Qs), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#ff8d72", lw=2))
+            # 5. رسم خط نقل وفقد القدرة المتشكل بين النقطتين (Power Transfer Line)
+            ax.plot([Pr, Ps], [Qr, Qs], color='#5cb85c', lw=2.5, ls='-', label='Power Transfer Line', zorder=5)
 
-            ax.scatter(Pr, Qr, color='#00d2ff', s=120, zorder=7, edgecolors='black')
-            ax.scatter(Ps, Qs, color='#ff8d72', s=120, zorder=7, edgecolors='black')
+            # 6. رسم متجهات القدرة الظاهرية الصافية الصادرة من نقطة الأصل (Origin Vectors)
+            ax.annotate("", xy=(Pr, Qr), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#00ffff", lw=2))
+            ax.annotate("", xy=(Ps, Qs), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#ffa500", lw=2))
+
+            # نقاط التشغيل الحالية
+            ax.scatter(Pr, Qr, color='#00ffff', s=120, zorder=7, edgecolors='black')
+            ax.scatter(Ps, Qs, color='#ffa500', s=120, zorder=7, edgecolors='black')
             
-            ax.text(Pr + (R_circle*0.03), Qr + (R_circle*0.03), 'S_r', fontsize=13, color='#00d2ff', fontweight='bold')
-            ax.text(Ps + (R_circle*0.03), Qs + (R_circle*0.03), 'S_s', fontsize=13, color='#ff8d72', fontweight='bold')
+            ax.text(Pr + (R_circle*0.03), Qr + (R_circle*0.03), 'S_r', fontsize=13, color='#00ffff', fontweight='bold')
+            ax.text(Ps + (R_circle*0.03), Qs + (R_circle*0.03), 'S_s', fontsize=13, color='#ffa500', fontweight='bold')
 
-            # 8. توقيع خط ونقطة أقصى قدرة استقبال (Pmax power) والحد الاستقراري الأفقي
-            ax.scatter(Pmax_calc, n_ry, color='#e14eca', s=150, marker='X', zorder=8)
-            ax.axvline(Pmax_calc, color='#e14eca', ls=':', alpha=0.6)
-            ax.text(Pmax_calc + (R_circle*0.04), n_ry, f'Pmax = {Pmax_calc:.2f} MW', color='#e14eca', fontsize=11, fontweight='bold')
+            # 7. تمثيل خط أقصى قدرة استقبال Pmax لتوضيح حدود الاستقرار الهندسي
+            ax.scatter(Pmax_calc, n_ry, color='#e14eca', s=120, marker='X', zorder=8)
+            ax.axvline(Pmax_calc, color='#e14eca', ls=':', alpha=0.5)
+            ax.text(Pmax_calc + (R_circle*0.04), n_ry, f'Pmax = {Pmax_calc:.2f} MW', color='#e14eca', fontsize=10, fontweight='bold')
 
-            # 9. كتابة نصوص توضيحية للزوايا الهندسية الحاكمة (β−α , Φ_r , δ) مباشرة على الرسمة
-            ax.text(n_rx/2 - (R_circle*0.05), n_ry/2, f'β−α = {beta - alpha:.1f}°', color='#aaaaaa', fontsize=10)
-            ax.text(Pr/2, Qr/2 + (R_circle*0.04), f'Φ_r = {abs(np.degrees(phi)):.1f}°', color='#00d2ff', fontsize=10)
-            ax.text((n_rx + Pr)/2, (n_ry + Qr)/2 + (R_circle*0.04), f'θ−α = {delta + (beta-alpha):.1f}°', color='white', fontsize=9)
-
-            # 10. ضبط أبعاد الرؤية والـ Scale التلقائي ليطابق الأبعاد الهندسية المتساوية (Equal Aspect Ratio)
-            all_x = np.concatenate([Pr_circle, Ps_circle, [0, Pr, Ps]])
-            all_y = np.concatenate([Qr_circle, Qs_circle, [0, Qr, Qs]])
+            # 8. كتابة الزوايا التشغيلية والهندسية الحاكمة على كل ضلع بدقة
+            # زاوية المحور المائل (beta - alpha) لمركز المستقبل وزاوية (beta - delta) لمركز المرسل
+            ax.text(n_rx*0.7, n_ry*0.7 - (R_circle*0.02), f'β−α = {beta - alpha:.1f}°', color='#aaaaaa', fontsize=10)
             
-            x_min, x_max = np.min(all_x), np.max(all_x)
-            y_min, y_max = np.min(all_y), np.max(all_y)
+            # زاوية معامل القدرة للحمل Phi_r بين المحور الأفقي ومتجه القدرة المستلمة S_r
+            ax.text(Pr*0.5, Qr*0.5 + (R_circle*0.04), f'Φ_r = {abs(np.degrees(phi)):.1f}°', color='#00ffff', fontsize=10)
             
-            pad_x = (x_max - x_min) * 0.12
-            pad_y = (y_max - y_min) * 0.12
+            # زاوية العزم والقدرة الداخلية (theta - alpha) المحصورة بين الخط الأفقي ونصف القطر
+            ax.text((n_rx + Pr)/2 - (R_circle*0.05), (n_ry + Qr)/2 - (R_circle*0.04), 
+                    f'θ−α = {delta + (beta-alpha):.1f}°', color='white', fontsize=10)
+
+            # 9. ضبط أبعاد النافذة التلقائي ليتناسب مع أطوال هذه المتجهات بانتظام هندسي دقيق (Equal Aspect)
+            all_pts_x = [0, Pr, Ps, n_rx, n_sx, Pmax_calc]
+            all_pts_y = [0, Qr, Qs, n_ry, n_sy, n_ry]
+            
+            x_min, x_max = min(all_pts_x), max(all_pts_x)
+            y_min, y_max = min(all_pts_y), max(all_pts_y)
+            
+            pad_x = (x_max - x_min) * 0.25
+            pad_y = (y_max - y_min) * 0.25
             
             ax.set_xlim(x_min - pad_x, x_max + pad_x)
             ax.set_ylim(y_min - pad_y, y_max + pad_y)
             ax.set_aspect('equal', adjustable='box')
 
-            # تظليل خطوط الحدود القصوى والدنيا للقدرة غير الفعالة
-            ax.axhline(Qmax, ls='--', color='#d83cb8', alpha=0.3)
-            ax.axhline(Qmin, ls='--', color='#d83cb8', alpha=0.3)
+            # خطوط الحدود الاسترشادية للقدرة غير الفعالة
+            ax.axhline(Qmax, ls='--', color='#d83cb8', alpha=0.2)
+            ax.axhline(Qmin, ls='--', color='#d83cb8', alpha=0.2)
 
             leg = ax.legend(facecolor='#1e2233', edgecolor='#444a5e', fontsize=9, loc='upper left')
             fix_legend_color(leg)
