@@ -290,14 +290,13 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 # ─────────────────────────────────────────────────────────
-# TAB 1 — Combined Power Phasor Diagram (EXACT LECTURE GEOMETRY)
+# TAB 1 — Combined Power Phasor Diagram (TRUE LECTURE VECTOR ADDITION)
 # ─────────────────────────────────────────────────────────
 with tab1:
     col_plot, col_info = st.columns([3, 1])
 
     with col_plot:
         if run_anim:
-            # أنيميشن الاستقرار المبسط
             fig_a, ax_a = plt.subplots(figsize=(8, 8))
             style_dark_plot(ax_a, fig_a, "", "Active Power P (MW)", "Reactive Power Q (MVAR)")
             ax_a.axhline(0, color='#626b82', lw=1.2)
@@ -306,100 +305,102 @@ with tab1:
             st.pyplot(fig_a)
 
         else:
-            fig, ax = plt.subplots(figsize=(10, 10))
+            fig, ax = plt.subplots(figsize=(11, 11))
             style_dark_plot(ax, fig,
                             "Combined Power Phasor Diagram",
                             "Active power (MW)",
                             "Reactive power (MVAR)")
 
-            # المحاور الأساسية المرجعية (نقطة الأصل O)
+            # 1. رسم المحاور الأساسية المتعامدة (نقطة الأصل O)
             ax.axhline(0, color='#ffffff', lw=1.2, zorder=2)
             ax.axvline(0, color='#ffffff', lw=1.2, zorder=2)
-            ax.text(10, 10, 'O', color='white', fontsize=12, fontweight='bold')
+            ax.text(20, 20, 'O (Origin)', color='white', fontsize=12, fontweight='bold')
 
-            # 1. حساب وتوجيه مركز الاستقبال n_r بناءً على الزاوية (beta - alpha) مع عقارب الساعة من المحور الأفقي السالب
-            # بنستخدم قيمة n_rx و n_ry أو المحصلة المركبة عشان نجيب الطول الفعلي الصافي للمتجه
+            # 2. رسم متجه مركز الاستقبال n_r من نقطة الأصل لأسفل الربع الثالث
             nr_mag = np.sqrt(n_rx**2 + n_ry**2) 
-            
-            # الزاوية الكلية انطلاقاً من المحور الأفقي الموجب تعادل: 180 + (beta - alpha)
-            ang_nr = np.radians(180 + (beta - alpha))
+            ang_nr = np.radians(180 + (beta - alpha)) # زاوية بيتا - الفا مع عقارب الساعة من المحور السالب
             n_rx_lect = nr_mag * np.cos(ang_nr)
             n_ry_lect = nr_mag * np.sin(ang_nr)
 
-            # رسم متجه مركز الاستقبال n_r
             ax.annotate("", xy=(n_rx_lect, n_ry_lect), xytext=(0, 0),
-                        arrowprops=dict(arrowstyle="->", color="#00d2ff", lw=2.5))
-            ax.scatter(n_rx_lect, n_ry_lect, color='#00d2ff', s=110, zorder=6, edgecolors='white')
-            ax.text(n_rx_lect - 35, n_ry_lect - 35, '$n_r$', color='#00d2ff', fontsize=16, fontweight='bold')
-            ax.text(n_rx_lect * 0.5 - 45, n_ry_lect * 0.5, r'$\frac{A \cdot V_r^2}{B}$', color='#00d2ff', fontsize=14, ha='right')
+                        arrowprops=dict(arrowstyle="->", color="#00d2ff", lw=2.5, mutation_scale=15))
+            ax.scatter(n_rx_lect, n_ry_lect, color='#00d2ff', s=130, zorder=6, edgecolors='white')
+            ax.text(n_rx_lect - 50, n_ry_lect - 30, '$n_r$', color='#00d2ff', fontsize=17, fontweight='bold')
+            ax.text(n_rx_lect * 0.5 - 50, n_ry_lect * 0.5, r'$\frac{A \cdot V_r^2}{B}$', color='#00d2ff', fontsize=15, ha='right')
 
-            # 2. توقيع متجه الحمل S_r الصادر من نقطة الأصل O بناءً على حسابات البرامج الحالية (Pr, Qr)
+            # 3. توقيع نقطة التشغيل S_r بالاعتماد على نهاية متجه n_r (تجميع اتجاهي متتابع كالورق تماماً)
+            # الزاوية المحصورة لنصف القطر في المحاضرة هي (theta - alpha)
+            # نقوم بحساب إحداثيات نقطة التشغيل الصافية للمستقبل
             pr_val = Pr
-            qr_val = Qr  # إشارته في برنامجك بتحدد تلقائياً الـ Lagging (أسفل) والـ Leading (أعلى) المحور
+            qr_val = Qr
 
-            ax.annotate("", xy=(pr_val, qr_val), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#00ffff", lw=2))
+            # رسم الضلع المتقطع الموصل من n_r إلى نقطة التشغيل (نصف قطر الدائرة R)
+            ax.annotate("", xy=(pr_val, qr_val), xytext=(n_rx_lect, n_ry_lect),
+                        arrowprops=dict(arrowstyle="->", color="#00d2ff", lw=2, linestyle="--", mutation_scale=12))
+            ax.text((n_rx_lect + pr_val)*0.5 - 55, (n_ry_lect + qr_val)*0.5 + 15, r'$\frac{V_r \cdot V_s}{B}$', color='#00d2ff', fontsize=14)
+
+            # رسم متجه الحمل الصافي من الصفر إلى S_r ليقفل المثلث هندسياً
+            ax.annotate("", xy=(pr_val, qr_val), xytext=(0, 0), 
+                        arrowprops=dict(arrowstyle="->", color="#00ffff", lw=2.5, mutation_scale=15))
             ax.scatter(pr_val, qr_val, color='#00ffff', s=120, zorder=7, edgecolors='black')
-            ax.text(pr_val + 15, qr_val + 10, '$S_r$', fontsize=15, color='#00ffff', fontweight='bold')
+            ax.text(pr_val + 20, qr_val + 20, '$S_r$', fontsize=16, color='#00ffff', fontweight='bold')
 
-            # 3. رسم ضلع نصف القطر (الخط المتقطع) الموصل من n_r الفعلي الجديد إلى S_r
-            ax.plot([n_rx_lect, pr_val], [n_ry_lect, qr_val], color='#00d2ff', lw=2, ls='--')
-            ax.text((n_rx_lect + pr_val)*0.5 - 35, (n_ry_lect + qr_val)*0.5 + 10, r'$\frac{V_r \cdot V_s}{B}$', color='#00d2ff', fontsize=13)
-
-            # 4. حساب وتوجيه مركز الإرسال n_s لأسفل المحور الأفقي الموجب بزاوية (beta - delta) كما في السلايد
+            # 4. بناء شق الإرسال (Sending-end) بنفس التتابع الورقي
+            # رسم متجه مركز المرسل n_s من نقطة الأصل لأسفل الربع الرابع بزاوية (beta - delta)
             ns_mag = np.sqrt(n_sx**2 + n_sy**2)
-            
-            # حساب التوجيه الزاوي لـ n_s ليكون متوافقاً هندسياً مع الـ Lagging والـ Leading
             ang_ns = np.radians(-(beta - delta)) if (beta - delta) > 0 else np.radians(360 - (beta - delta))
             n_sx_lect = ns_mag * np.cos(ang_ns)
             n_sy_lect = ns_mag * np.sin(ang_ns)
 
-            # رسم متجه مركز المرسل n_s
             ax.annotate("", xy=(n_sx_lect, n_sy_lect), xytext=(0, 0),
-                        arrowprops=dict(arrowstyle="->", color="#ff8d72", lw=2.5))
-            ax.scatter(n_sx_lect, n_sy_lect, color='#ff8d72', s=110, zorder=6, edgecolors='white')
-            ax.text(n_sx_lect + 20, n_sy_lect - 35, '$n_s$', color='#ff8d72', fontsize=16, fontweight='bold')
-            ax.text(n_sx_lect * 0.5 + 30, n_sy_lect * 0.5 - 20, r'$\frac{D \cdot V_s^2}{B}$', color='#ff8d72', fontsize=14, ha='left')
+                        arrowprops=dict(arrowstyle="->", color="#ff8d72", lw=2.5, mutation_scale=15))
+            ax.scatter(n_sx_lect, n_sy_lect, color='#ff8d72', s=130, zorder=6, edgecolors='white')
+            ax.text(n_sx_lect + 25, n_sy_lect - 30, '$n_s$', color='#ff8d72', fontsize=17, fontweight='bold')
+            ax.text(n_sx_lect * 0.5 + 40, n_sy_lect * 0.5 - 20, r'$\frac{D \cdot V_s^2}{B}$', color='#ff8d72', fontsize=15, ha='left')
 
-            # نقطة تشغيل المرسل S_s من متغيرات البرنامج الأساسية
+            # نقاط تشغيل المرسل الصافية
             ps_val = Ps
             qs_val = Qs
 
-            # رسم متجه المرسل من نقطة الأصل O إلى S_s
-            ax.annotate("", xy=(ps_val, qs_val), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#ffa500", lw=2))
+            # رسم الضلع المتقطع الصاعد من n_s إلى نقطة التشغيل S_s
+            ax.annotate("", xy=(ps_val, qs_val), xytext=(n_sx_lect, n_sy_lect),
+                        arrowprops=dict(arrowstyle="->", color="#ff8d72", lw=2, linestyle="--", mutation_scale=12))
+            ax.text((n_sx_lect + ps_val)*0.5 + 25, (n_sy_lect + qs_val)*0.5, r'$\frac{V_r \cdot V_s}{B}$', color='#ff8d72', fontsize=14)
+
+            # رسم متجه المرسل الصافي المحصل من الصفر إلى S_s لتقفيل الجزء السفلي
+            ax.annotate("", xy=(ps_val, qs_val), xytext=(0, 0), 
+                        arrowprops=dict(arrowstyle="->", color="#ffa500", lw=2.5, mutation_scale=15))
             ax.scatter(ps_val, qs_val, color='#ffa500', s=120, zorder=7, edgecolors='black')
-            ax.text(ps_val + 15, qs_val + 15, '$S_s$', fontsize=15, color='#ffa500', fontweight='bold')
+            ax.text(ps_val + 20, qs_val + 25, '$S_s$', fontsize=16, color='#ffa500', fontweight='bold')
 
-            # رسم نصف قطر المرسل المتقطع الموصل من n_s الجديد إلى S_s
-            ax.plot([n_sx_lect, ps_val], [n_sy_lect, qs_val], color='#ff8d72', lw=2, ls='--')
-            ax.text((n_sx_lect + ps_val)*0.5 + 20, (n_sy_lect + qs_val)*0.5, r'$\frac{V_r \cdot V_s}{B}$', color='#ff8d72', fontsize=13)
+            # 5. خط نقل وفقد القدرة المشترك الواصل بين نقطتي التشغيل (Power Transfer Line)
+            ax.plot([pr_val, ps_val], [qr_val, qs_val], color='#5cb85c', lw=3, ls='-', label='Power Transfer Line', zorder=5)
 
-            # 5. خط نقل وفقد القدرة (Power Transfer Line) المشترك
-            ax.plot([pr_val, ps_val], [qr_val, qs_val], color='#5cb85c', lw=2.5, ls='-', label='Power Transfer Line', zorder=5)
+            # 6. إسقاط فرق القدرة غير الفعالة المطلوب Q_needed رأسياً موازي تماماً للكشكول
+            ax.plot([pr_val, pr_val], [qr_val, qs_val], color='#ff4757', lw=2, ls=':')
+            ax.text(pr_val - 65, (qr_val + qs_val)/2, '$Q_{needed}$', color='#ff4757', fontsize=13, fontweight='bold')
 
-            # 6. إسقاط فرق القدرة غير الفعالة المطلوب Q_needed رأسياً بين مستويي التشغيل كما في الكشكول
-            ax.plot([pr_val, pr_val], [qr_val, qs_val], color='#ff4757', lw=1.8, ls=':')
-            ax.text(pr_val - 55, (qr_val + qs_val)/2, '$Q_{needed}$', color='#ff4757', fontsize=12, fontweight='bold')
+            # 7. إسقاط خط الـ Pmax الأفقي الممتد من مركز الاستقبال ليسقط عمودياً على محور السينات
+            pmax_plot_x = Pmax_calc
+            pmax_plot_y = 0  
+            
+            ax.scatter(pmax_plot_x, pmax_plot_y, color='#e14eca', s=160, marker='X', zorder=9, edgecolors='black')
+            ax.plot([n_rx_lect, pmax_plot_x], [n_ry_lect, 0], color='#aaaaaa', ls='-.', lw=1.2)
+            ax.plot([pmax_plot_x, pmax_plot_x], [n_ry_lect, 30], color='#e14eca', ls=':', alpha=0.9, lw=2)
+            ax.text(pmax_plot_x + 20, 35, f'$P_{{rmax}} = {Pmax_calc:.2f}$ MW', color='#e14eca', fontsize=13, fontweight='bold',
+                    bbox=dict(facecolor='#1e2233', alpha=0.8, edgecolor='none'))
 
-            # 7. إسقاط خط الـ Pmax العمودي ليسقط تماماً وبشكل قائم على محور الـ Active Power الأفقي
-            pmax_x = n_rx_lect + R_circle
-            pmax_y = n_ry_lect
-            ax.scatter(pmax_x, pmax_y, color='#e14eca', s=140, marker='X', zorder=8)
-            ax.plot([n_rx_lect, pmax_x], [n_ry_lect, pmax_y], color='#aaaaaa', ls='-.', lw=1.2)
-            ax.plot([pmax_x, pmax_x], [pmax_y, 0], color='#e14eca', ls=':', alpha=0.7, lw=1.8)
-            ax.text(pmax_x + 15, -35, f'$P_{{rmax}} = {Pmax_calc:.2f}$ MW', color='#e14eca', fontsize=12, fontweight='bold',
-                    bbox=dict(facecolor='#1e2233', alpha=0.6, edgecolor='none'))
+            # 8. توقيع نصوص ونطاقات الزوايا بدقة متناهية
+            ax.text(n_rx_lect * 0.3, n_ry_lect * 0.4, f'β−α = {beta - alpha:.1f}°', color='#aaaaaa', fontsize=12)
+            ax.text(pr_val * 0.3, qr_val * 0.5 + (30 if qr_val > 0 else -30), r'$\Phi_r$', color='#00ffff', fontsize=15, fontweight='bold')
+            ax.text((n_rx_lect + pr_val)*0.5 + 30, (n_ry_lect + qr_val)*0.5 - 25, r'$\theta-\alpha$', color='white', fontsize=14, fontweight='bold')
 
-            # 8. كتابة نصوص وتوجيه الزوايا المرجعية للأقواس
-            ax.text(n_rx_lect * 0.4, n_ry_lect * 0.3, f'β−α = {beta - alpha:.1f}°', color='#aaaaaa', fontsize=11)
-            ax.text(pr_val * 0.4, qr_val * 0.4 + (20 if qr_val > 0 else -20), r'$\Phi_r$', color='#00ffff', fontsize=14)
-            ax.text((n_rx_lect + pr_val)*0.5 + 25, (n_ry_lect + qr_val)*0.5 - 35, r'$\theta-\alpha$', color='white', fontsize=12)
-
-            # 9. إحكام الـ Scale والحدود لمنع أي تشوه في الزوايا الحقيقية (Equal Aspect Ratio)
-            ax.set_xlim(n_rx_lect - 120, max(n_sx_lect, pmax_x) + 150)
+            # 9. ضبط وإحكام نافذة الرؤية والـ Scale لمنع تمدد أو انكماش الأبعاد هندسياً
+            ax.set_xlim(n_rx_lect - 150, max(n_sx_lect, pmax_plot_x) + 150)
             ax.set_ylim(min(n_ry_lect, n_sy_lect) - 150, max(qr_val, qs_val) + 150)
             ax.set_aspect('equal', adjustable='box')
 
-            leg = ax.legend(facecolor='#1e2233', edgecolor='#444a5e', fontsize=10, loc='upper left')
+            leg = ax.legend(facecolor='#1e2233', edgecolor='#444a5e', fontsize=11, loc='upper left')
             fix_legend_color(leg)
             st.pyplot(fig)
 # ─────────────────────────────────────────────────────────
