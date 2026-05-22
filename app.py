@@ -309,18 +309,20 @@ with tab1:
             fig, ax = plt.subplots(figsize=(10, 10))
             style_dark_plot(ax, fig,
                             "Combined Power Phasor Diagram",
-                            "Active power",
-                            "Reactive power")
+                            "Active power (MW)",
+                            "Reactive power (MVAR)")
 
-            # المحاور الأساسية (نقطة الأصل O)
+            # المحاور الأساسية المرجعية (نقطة الأصل O)
             ax.axhline(0, color='#ffffff', lw=1.2, zorder=2)
             ax.axvline(0, color='#ffffff', lw=1.2, zorder=2)
             ax.text(10, 10, 'O', color='white', fontsize=12, fontweight='bold')
 
-            # 1. تحديد إحداثيات مركز الاستقبال n_r بناءً على قياس الزاوية مع عقارب الساعة من المحور الأفقي السالب
-            # الزاوية الكلية من المحور الأفقي الموجب تعادل: 180 + (beta - alpha)
+            # 1. حساب وتوجيه مركز الاستقبال n_r بناءً على الزاوية (beta - alpha) مع عقارب الساعة من المحور الأفقي السالب
+            # بنستخدم قيمة n_rx و n_ry أو المحصلة المركبة عشان نجيب الطول الفعلي الصافي للمتجه
+            nr_mag = np.sqrt(n_rx**2 + n_ry**2) 
+            
+            # الزاوية الكلية انطلاقاً من المحور الأفقي الموجب تعادل: 180 + (beta - alpha)
             ang_nr = np.radians(180 + (beta - alpha))
-            nr_mag = abs(A_mag * (Vr_mag**2) / B_mag)
             n_rx_lect = nr_mag * np.cos(ang_nr)
             n_ry_lect = nr_mag * np.sin(ang_nr)
 
@@ -331,26 +333,23 @@ with tab1:
             ax.text(n_rx_lect - 35, n_ry_lect - 35, '$n_r$', color='#00d2ff', fontsize=16, fontweight='bold')
             ax.text(n_rx_lect * 0.5 - 45, n_ry_lect * 0.5, r'$\frac{A \cdot V_r^2}{B}$', color='#00d2ff', fontsize=14, ha='right')
 
-            # 2. توقيع نقطة التشغيل للمستقبل S_r بناءً على قيمة الـ Active power وحالة الـ Power Factor
-            # معامل التوجيه لـ Q بناءً على نوع الـ PF (Lagging لأسفل الصفر، Leading لأعلى الصفر)
-            # نفترض وجود متغير متصل بالواجهة يحدد الاختيار كـ pf_mode == "Lagging" أو حساب إشارة الجيب تلقائياً
-            # إذا كان الكود الخاص بك يحسب Qr كقيمة سالبة في الـ Lagging:
+            # 2. توقيع متجه الحمل S_r الصادر من نقطة الأصل O بناءً على حسابات البرامج الحالية (Pr, Qr)
             pr_val = Pr
-            qr_val = Qr  # يتأثر تلقائياً بإشارة حساباتك (سالب للـ Lag، موجب للـ Lead)
+            qr_val = Qr  # إشارته في برنامجك بتحدد تلقائياً الـ Lagging (أسفل) والـ Leading (أعلى) المحور
 
-            # رسم متجه الحمل S_r الصادر من نقطة الأصل O
             ax.annotate("", xy=(pr_val, qr_val), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#00ffff", lw=2))
             ax.scatter(pr_val, qr_val, color='#00ffff', s=120, zorder=7, edgecolors='black')
             ax.text(pr_val + 15, qr_val + 10, '$S_r$', fontsize=15, color='#00ffff', fontweight='bold')
 
-            # 3. رسم ضلع نصف القطر المتقطع الموصل من n_r إلى S_r (طوله يساوي V_r * V_s / B)
+            # 3. رسم ضلع نصف القطر (الخط المتقطع) الموصل من n_r الفعلي الجديد إلى S_r
             ax.plot([n_rx_lect, pr_val], [n_ry_lect, qr_val], color='#00d2ff', lw=2, ls='--')
             ax.text((n_rx_lect + pr_val)*0.5 - 35, (n_ry_lect + qr_val)*0.5 + 10, r'$\frac{V_r \cdot V_s}{B}$', color='#00d2ff', fontsize=13)
 
-            # 4. بناء شق المرسل (Sending-end) انطلاقاً من مركز المرسل n_s
-            # طبقاً للمحاضرة، نوقع المركز n_s بزاوية (beta - delta) لأسفل المحور الأفقي الموجب
+            # 4. حساب وتوجيه مركز الإرسال n_s لأسفل المحور الأفقي الموجب بزاوية (beta - delta) كما في السلايد
+            ns_mag = np.sqrt(n_sx**2 + n_sy**2)
+            
+            # حساب التوجيه الزاوي لـ n_s ليكون متوافقاً هندسياً مع الـ Lagging والـ Leading
             ang_ns = np.radians(-(beta - delta)) if (beta - delta) > 0 else np.radians(360 - (beta - delta))
-            ns_mag = abs(D_mag * (Vs_mag**2) / B_mag)
             n_sx_lect = ns_mag * np.cos(ang_ns)
             n_sy_lect = ns_mag * np.sin(ang_ns)
 
@@ -361,27 +360,27 @@ with tab1:
             ax.text(n_sx_lect + 20, n_sy_lect - 35, '$n_s$', color='#ff8d72', fontsize=16, fontweight='bold')
             ax.text(n_sx_lect * 0.5 + 30, n_sy_lect * 0.5 - 20, r'$\frac{D \cdot V_s^2}{B}$', color='#ff8d72', fontsize=14, ha='left')
 
-            # نقطة تشغيل المرسل S_s الناتجة حسابياً من معادلاتك
+            # نقطة تشغيل المرسل S_s من متغيرات البرنامج الأساسية
             ps_val = Ps
             qs_val = Qs
 
-            # رسم متجه المرسل الصافي الصادر من نقطة الأصل O إلى S_s
+            # رسم متجه المرسل من نقطة الأصل O إلى S_s
             ax.annotate("", xy=(ps_val, qs_val), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#ffa500", lw=2))
             ax.scatter(ps_val, qs_val, color='#ffa500', s=120, zorder=7, edgecolors='black')
             ax.text(ps_val + 15, qs_val + 15, '$S_s$', fontsize=15, color='#ffa500', fontweight='bold')
 
-            # رسم نصف قطر المرسل المتقطع الموصل من n_s إلى S_s
+            # رسم نصف قطر المرسل المتقطع الموصل من n_s الجديد إلى S_s
             ax.plot([n_sx_lect, ps_val], [n_sy_lect, qs_val], color='#ff8d72', lw=2, ls='--')
             ax.text((n_sx_lect + ps_val)*0.5 + 20, (n_sy_lect + qs_val)*0.5, r'$\frac{V_r \cdot V_s}{B}$', color='#ff8d72', fontsize=13)
 
-            # 5. خط نقل وفقد القدرة المشترك الواصل بين النقطتين (Power Transfer Line)
+            # 5. خط نقل وفقد القدرة (Power Transfer Line) المشترك
             ax.plot([pr_val, ps_val], [qr_val, qs_val], color='#5cb85c', lw=2.5, ls='-', label='Power Transfer Line', zorder=5)
 
-            # 6. إسقاط فرق القدرة غير الفعالة المطلوب Q_needed رأسياً بين مستويي التشغيل
+            # 6. إسقاط فرق القدرة غير الفعالة المطلوب Q_needed رأسياً بين مستويي التشغيل كما في الكشكول
             ax.plot([pr_val, pr_val], [qr_val, qs_val], color='#ff4757', lw=1.8, ls=':')
             ax.text(pr_val - 55, (qr_val + qs_val)/2, '$Q_{needed}$', color='#ff4757', fontsize=12, fontweight='bold')
 
-            # 7. إسقاط خط الـ Pmax العمودي ليسقط تماماً على محور الـ Active Power الأفقي
+            # 7. إسقاط خط الـ Pmax العمودي ليسقط تماماً وبشكل قائم على محور الـ Active Power الأفقي
             pmax_x = n_rx_lect + R_circle
             pmax_y = n_ry_lect
             ax.scatter(pmax_x, pmax_y, color='#e14eca', s=140, marker='X', zorder=8)
@@ -392,7 +391,6 @@ with tab1:
 
             # 8. كتابة نصوص وتوجيه الزوايا المرجعية للأقواس
             ax.text(n_rx_lect * 0.4, n_ry_lect * 0.3, f'β−α = {beta - alpha:.1f}°', color='#aaaaaa', fontsize=11)
-            # مكان عرض Phi_r يتكيف هندسياً مع ربع التشغيل
             ax.text(pr_val * 0.4, qr_val * 0.4 + (20 if qr_val > 0 else -20), r'$\Phi_r$', color='#00ffff', fontsize=14)
             ax.text((n_rx_lect + pr_val)*0.5 + 25, (n_ry_lect + qr_val)*0.5 - 35, r'$\theta-\alpha$', color='white', fontsize=12)
 
